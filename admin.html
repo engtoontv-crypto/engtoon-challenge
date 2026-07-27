@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>잉툰 챌린지 · 관리자</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=Nunito:ital,wght@0,600;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1E3A4F; --sky:#47AEE4; --sky-deep:#2E90C8; --sky-soft:#E3F3FC;
+  --paper:#FBFBF4; --card:#FFFFFF; --sun:#FFD34D; --coral:#FF7B6B; --green:#2FBF87;
+  --line:2.5px solid var(--ink); --pop:4px 4px 0 var(--ink); --pop-sm:3px 3px 0 var(--ink); --r:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky-soft);
+  background-image:radial-gradient(#c9e6f7 1.5px, transparent 1.5px);background-size:22px 22px;
+  min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:430px;background:var(--paper);min-height:100vh;border-left:var(--line);border-right:var(--line);padding-bottom:30px}
+
+/* ---------- 로그인 ---------- */
+#loginScr{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:30px 26px;background:var(--ink);background-image:radial-gradient(#2e4f68 2px, transparent 2px);background-size:26px 26px}
+.lg-wrap{text-align:center;margin-bottom:26px}
+.lg-face{width:84px;height:84px;margin:0 auto 12px;border:3px solid #fff;border-radius:50%;background:#fff;box-shadow:5px 5px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:40px}
+.lg-title{font-family:'Jua';font-size:26px;color:#fff}
+.lg-sub{margin-top:6px;font-size:12.5px;font-weight:700;color:#9fc3da}
+.lg-card{background:var(--paper);border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 rgba(0,0,0,.35);padding:22px 18px}
+.lg-card label{display:block;font-family:'Jua';font-size:13px;margin:2px 0 6px}
+.lg-card input{width:100%;border:2px solid var(--ink);border-radius:10px;padding:12px;font-size:15px;background:#fff;margin-bottom:14px}
+.lg-btn{width:100%;font-family:'Jua';font-size:16px;background:var(--sky);color:#fff;text-shadow:1px 1px 0 var(--ink);border:2.5px solid var(--ink);border-radius:12px;padding:12px;cursor:pointer;box-shadow:var(--pop)}
+.lg-btn:disabled{opacity:.6}
+.lg-err{font-size:12px;color:var(--coral);font-weight:700;text-align:center;margin-top:10px;display:none}
+.lg-err.show{display:block}
+
+/* ---------- 메인 ---------- */
+#mainScr{display:none}
+.topbar{background:var(--ink);border-bottom:var(--line);padding:14px 16px 12px;position:sticky;top:0;z-index:20}
+.topbar .row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.brand{font-family:'Jua';font-size:17px;color:#fff}
+.brand .adm{font-size:10.5px;background:var(--coral);border:2px solid #fff;border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:2px}
+.rolebadge{font-size:10.5px;background:#fff;border-radius:999px;padding:2px 9px;font-weight:800;margin-left:6px;color:var(--ink)}
+.logoutbtn{background:rgba(255,255,255,.92);border:none;border-radius:9px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;color:var(--ink)}
+.stage{padding:16px}
+.card{background:var(--card);border:var(--line);border-radius:var(--r);box-shadow:var(--pop);margin-bottom:16px;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:var(--line);background:var(--sky-soft)}
+.step-no{font-family:'Jua';font-size:12px;background:var(--ink);color:#fff;border-radius:8px;padding:2px 8px}
+.card-h b{font-family:'Jua';font-size:15px;font-weight:400}
+.card-h .hint{margin-left:auto;font-size:11px;color:#5a7285}
+.card-b{padding:14px}
+.form{display:flex;flex-direction:column;gap:9px}
+.form input,.form select{border:1.5px solid #cfe0ea;border-radius:10px;padding:10px 12px;font-size:14px;background:#fff;font-family:'Noto Sans KR'}
+.row2{display:flex;align-items:center;gap:10px}
+.row2 label{font-family:'Jua';font-size:12.5px;color:var(--sky-deep);white-space:nowrap}
+.row2 input{flex:1}
+.hintline{font-size:11px;color:#7b93a4;line-height:1.6}
+.pbtn{font-family:'Jua';font-size:14px;background:var(--sky);color:#fff;text-shadow:1px 1px 0 var(--ink);border:2px solid var(--ink);border-radius:10px;padding:10px;cursor:pointer;box-shadow:var(--pop-sm)}
+.pbtn:disabled{opacity:.6}
+.roletabs{display:flex;gap:8px;margin-bottom:11px}
+.roletab{flex:1;font-family:'Jua';font-size:13px;background:#fff;border:1.5px solid #cfe0ea;border-radius:10px;padding:8px;cursor:pointer;text-align:center;color:var(--ink)}
+.roletab.on{background:var(--sky);color:#fff;border-color:var(--sky)}
+.srow{display:flex;align-items:center;gap:9px;border-bottom:1.5px solid #e3edf3;padding:10px 2px;font-size:13px}
+.srow:last-child{border-bottom:none}
+.sname{font-family:'Jua';font-size:13.5px;min-width:56px}
+.sid{color:#7b93a4;font-size:11.5px;flex:1}
+.sexp{font-size:10.5px;font-weight:800;color:var(--sky-deep);background:var(--sky-soft);border-radius:999px;padding:2px 8px}
+.sexp.warn{color:#fff;background:var(--coral)}
+.empty{text-align:center;font-size:12.5px;color:#7b93a4;padding:14px 0}
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:9px 18px;z-index:70;display:none;max-width:86%;text-align:center}
+.toast.show{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="loginScr">
+    <div class="lg-wrap">
+      <div class="lg-face">👩‍🏫</div>
+      <div class="lg-title">잉툰 챌린지</div>
+      <div class="lg-sub">관리자 로그인</div>
+    </div>
+    <div class="lg-card">
+      <label>아이디</label>
+      <input id="lg-id" placeholder="아이디" autocomplete="username">
+      <label>비밀번호</label>
+      <input id="lg-pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+      <button class="lg-btn" id="lg-btn" onclick="doLogin()">로그인</button>
+      <div class="lg-err" id="lg-err"></div>
+    </div>
+  </div>
+
+  <div id="mainScr">
+    <div class="topbar">
+      <div class="row">
+        <div class="brand">잉툰 챌린지<span class="adm">관리자</span><span class="rolebadge" id="roleBadge"></span></div>
+        <button class="logoutbtn" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+    <div class="stage">
+
+      <div class="card">
+        <div class="card-h"><span class="step-no">NEW</span><b>새 계정 만들기</b><span class="hint" id="acctHint"></span></div>
+        <div class="card-b">
+          <div class="roletabs" id="roleTabs" style="display:none">
+            <button class="roletab on" id="tabStudent" onclick="setAcctRole('student')">👤 학생 계정</button>
+            <button class="roletab" id="tabAdmin" onclick="setAcctRole('admin')">🛡️ 관리자 계정</button>
+          </div>
+
+          <div class="form" id="studentForm">
+            <input id="na-name" placeholder="학생 이름">
+            <input id="na-id" placeholder="아이디">
+            <input id="na-pw" type="password" placeholder="초기 비밀번호">
+            <div class="row2">
+              <label>이용 만료일</label>
+              <input id="na-exp" type="date">
+            </div>
+            <div class="hintline">닉네임은 학생이 로그인 후 직접 설정해요 (초기값은 이름과 동일).</div>
+            <button class="pbtn" id="na-btn" onclick="createStudent()">➕ 학생 계정 생성</button>
+          </div>
+
+          <div class="form" id="adminForm" style="display:none">
+            <input id="na2-name" placeholder="관리자 이름">
+            <input id="na2-id" placeholder="아이디">
+            <input id="na2-pw" type="password" placeholder="초기 비밀번호">
+            <select id="na2-role">
+              <option value="general">일반관리자</option>
+              <option value="super">최고관리자</option>
+            </select>
+            <div class="hintline">최고관리자는 관리자 계정 생성 등 모든 권한을 가져요.</div>
+            <button class="pbtn" id="na2-btn" onclick="createAdminAcct()">➕ 관리자 계정 생성</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><span class="step-no">LIST</span><b>학생 목록</b><span class="hint" id="stuCount"></span></div>
+        <div class="card-b" id="stuList"><div class="empty">불러오는 중...</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const SUPA_URL="https://axwkoviaxacxkbxtouwh.supabase.co";
+const SUPA_KEY="sb_publishable_lQCcI5UMHOlVfL8yunPc9Q_lJZSiBhY";
+
+async function rpc(name, params){
+  const r=await fetch(SUPA_URL+"/rest/v1/rpc/"+name,{
+    method:"POST",
+    headers:{"apikey":SUPA_KEY,"Authorization":"Bearer "+SUPA_KEY,"Content-Type":"application/json"},
+    body:JSON.stringify(params||{})
+  });
+  const t=await r.text();
+  if(!r.ok) throw new Error(t||("HTTP "+r.status));
+  return t?JSON.parse(t):null;
+}
+
+const AKEY="engtoon_challenge_admin";
+let me=null;
+let acctRole="student";
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(window._tt);
+  window._tt=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+function defaultExpiry(){
+  const d=new Date(); d.setDate(d.getDate()+130); /* 대략 챌린지 100일 + 졸업생 30일 */
+  return d.toISOString().slice(0,10);
+}
+
+function showMain(){
+  document.getElementById("loginScr").style.display="none";
+  document.getElementById("mainScr").style.display="block";
+  document.getElementById("roleBadge").textContent=me.role==="super"?"👑 최고관리자":"일반관리자";
+  const isSuper=me.role==="super";
+  document.getElementById("roleTabs").style.display=isSuper?"flex":"none";
+  document.getElementById("acctHint").textContent=isSuper?"학생·관리자 모두 생성 가능":"학생 계정만 생성 가능";
+  document.getElementById("na-exp").value=defaultExpiry();
+  loadStudents();
+}
+
+async function doLogin(){
+  const id=document.getElementById("lg-id").value.trim();
+  const pw=document.getElementById("lg-pw").value;
+  const err=document.getElementById("lg-err");
+  err.classList.remove("show");
+  if(!id||!pw){err.textContent="아이디와 비밀번호를 입력해 주세요";err.classList.add("show");return;}
+  const btn=document.getElementById("lg-btn");
+  btn.disabled=true;btn.textContent="확인 중...";
+  try{
+    const rows=await rpc("admin_login",{p_login_id:id,p_pw:pw});
+    if(!rows||!rows.length){
+      err.textContent="아이디 또는 비밀번호가 올바르지 않아요";
+      err.classList.add("show");
+    }else{
+      me=rows[0];
+      localStorage.setItem(AKEY,JSON.stringify(me));
+      showMain();
+    }
+  }catch(e){
+    err.textContent="서버 연결에 실패했어요. 잠시 후 다시 시도해 주세요";
+    err.classList.add("show");
+  }
+  btn.disabled=false;btn.textContent="로그인";
+}
+
+function doLogout(){
+  me=null;
+  localStorage.removeItem(AKEY);
+  document.getElementById("mainScr").style.display="none";
+  document.getElementById("loginScr").style.display="flex";
+  document.getElementById("lg-id").value="";
+  document.getElementById("lg-pw").value="";
+}
+
+function setAcctRole(r){
+  acctRole=r;
+  document.getElementById("tabStudent").classList.toggle("on",r==="student");
+  document.getElementById("tabAdmin").classList.toggle("on",r==="admin");
+  document.getElementById("studentForm").style.display=r==="student"?"flex":"none";
+  document.getElementById("adminForm").style.display=r==="admin"?"flex":"none";
+}
+
+async function createStudent(){
+  const name=document.getElementById("na-name").value.trim();
+  const id=document.getElementById("na-id").value.trim();
+  const pw=document.getElementById("na-pw").value;
+  const exp=document.getElementById("na-exp").value;
+  if(!name||!id||!pw||!exp){toast("이름·아이디·비밀번호·만료일을 모두 입력해 주세요");return;}
+  const btn=document.getElementById("na-btn");
+  btn.disabled=true;
+  try{
+    await rpc("create_student",{p_login_id:id,p_pw:pw,p_name:name,p_expires:exp});
+    toast(name+" 학생 계정 생성 완료 · 만료일 "+exp);
+    document.getElementById("na-name").value="";
+    document.getElementById("na-id").value="";
+    document.getElementById("na-pw").value="";
+    loadStudents();
+  }catch(e){
+    toast(e.message.includes("duplicate")?"이미 사용 중인 아이디예요":"생성 실패: 잠시 후 다시 시도해 주세요");
+  }
+  btn.disabled=false;
+}
+
+async function createAdminAcct(){
+  if(!me||me.role!=="super"){toast("최고관리자만 가능해요");return;}
+  const name=document.getElementById("na2-name").value.trim();
+  const id=document.getElementById("na2-id").value.trim();
+  const pw=document.getElementById("na2-pw").value;
+  const role=document.getElementById("na2-role").value;
+  if(!name||!id||!pw){toast("이름·아이디·비밀번호를 모두 입력해 주세요");return;}
+  const btn=document.getElementById("na2-btn");
+  btn.disabled=true;
+  try{
+    await rpc("create_admin",{p_login_id:id,p_pw:pw,p_name:name,p_role:role});
+    toast(name+"님 "+(role==="super"?"최고관리자":"일반관리자")+" 계정 생성 완료");
+    document.getElementById("na2-name").value="";
+    document.getElementById("na2-id").value="";
+    document.getElementById("na2-pw").value="";
+  }catch(e){
+    toast(e.message.includes("duplicate")?"이미 사용 중인 아이디예요":"생성 실패: 잠시 후 다시 시도해 주세요");
+  }
+  btn.disabled=false;
+}
+
+async function loadStudents(){
+  const box=document.getElementById("stuList");
+  try{
+    const rows=await rpc("list_students",{});
+    document.getElementById("stuCount").textContent=(rows?rows.length:0)+"명";
+    if(!rows||!rows.length){box.innerHTML='<div class="empty">아직 학생이 없어요. 위에서 첫 계정을 만들어 보세요!</div>';return;}
+    const today=new Date(); today.setHours(0,0,0,0);
+    box.innerHTML=rows.map(s=>{
+      const dl=Math.round((new Date(s.expires_at+"T00:00:00")-today)/86400000);
+      const warn=dl<=14;
+      return `<div class="srow">
+        <span class="sname">${s.name}</span>
+        <span class="sid">@${s.login_id}${s.nickname&&s.nickname!==s.name?" · 닉네임 "+s.nickname:""}</span>
+        <span class="sexp ${warn?"warn":""}">${dl<0?"만료":"D-"+dl}</span>
+      </div>`;
+    }).join("");
+  }catch(e){
+    box.innerHTML='<div class="empty">목록을 불러오지 못했어요 (list_students 함수가 실행됐는지 확인해 주세요)</div>';
+  }
+}
+
+/* 세션 복원 */
+(function(){
+  const saved=localStorage.getItem(AKEY);
+  if(saved){try{me=JSON.parse(saved);showMain();}catch(e){localStorage.removeItem(AKEY);}}
+})();
+
+document.getElementById("lg-pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
+</script>
+</body>
+</html>
