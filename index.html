@@ -115,6 +115,23 @@ section[hidden]{display:none!important}
 .navbtns{display:flex;gap:9px;margin-top:4px}
 .navbtns .mini{flex:1;text-align:center}
 
+/* ---------- 메달 ---------- */
+.mcat{font-family:'Jua';font-size:14px;margin:18px 0 9px}
+.mcat:first-child{margin-top:0}
+.mcat .mc-cnt{font-family:'Nunito';font-weight:800;font-size:11.5px;color:#7b93a4;margin-left:6px}
+.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.medal{border:2px solid var(--ink);border-radius:12px;background:#fff;box-shadow:2px 2px 0 var(--ink);padding:9px 4px;text-align:center}
+.medal .mi{font-size:22px}
+.medal .mn{font-family:'Jua';font-size:9.5px;margin-top:3px;line-height:1.3}
+.medal.locked{background:#f3f6f8;box-shadow:none;border-color:#dbe4ea}
+.medal.locked .mi{filter:grayscale(1);opacity:.4}
+.medal.locked .mn{color:#b9c6d0}
+.medal.new{animation:pop .5s}
+@keyframes pop{0%{transform:scale(.6)}70%{transform:scale(1.12)}100%{transform:scale(1)}}
+.msum{background:linear-gradient(135deg,var(--sky),var(--sun));border:var(--line);border-radius:var(--r);box-shadow:var(--pop);padding:14px;margin-bottom:6px;color:#1e3a4f}
+.msum .mt{font-family:'Jua';font-size:16px}
+.msum .md{font-size:12px;font-weight:700;margin-top:2px}
+
 /* ---------- 유닛 완료 오버레이 ---------- */
 .veil{position:fixed;inset:0;background:rgba(30,58,79,.72);z-index:60;display:none;align-items:center;justify-content:center;padding:28px}
 .veil.show{display:flex}
@@ -180,6 +197,18 @@ section[hidden]{display:none!important}
     <div class="stage" id="studyStage"><div class="loading">불러오는 중...</div></div>
   </section>
 
+  <!-- 메달 -->
+  <section id="scr-medals" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="show('home')">‹ 홈</button>
+        <div class="brand">🏅 내 메달</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage" id="medalStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <div class="veil" id="unitVeil">
     <div class="vmodal">
       <div class="em">🎉</div>
@@ -218,7 +247,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study"};
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -307,7 +336,10 @@ async function enterHome(){
         <div class="today-sub">모든 유닛을 완료했어요. 정말 대단해요!</div>`}
       </div>
     </div>
-    <button class="mini" style="width:100%;text-align:center" onclick="openUnits()">📚 전체 유닛 목록 보기</button>`;
+    <div style="display:flex;gap:9px">
+      <button class="mini" style="flex:1;text-align:center" onclick="openUnits()">📚 유닛 목록</button>
+      <button class="mini" style="flex:1;text-align:center" onclick="openMedals()">🏅 내 메달</button>
+    </div>`;
 }
 
 /* ================= 유닛 목록 ================= */
@@ -507,6 +539,7 @@ function checkExpDone(){
   if(e.speak>=10&&e.copy>=3&&e.answers.every(a=>a&&a.mine)){
     e.done=true;
     saveExp(e);
+    awardCheck();
     /* 홈 카운터 즉시 반영 */
     const u=UNITS.find(x=>x.unit_no===curUnit);
     if(u)u.done=Math.min(u.total,u.done+1);
@@ -518,6 +551,64 @@ function checkExpDone(){
       setTimeout(()=>document.getElementById("unitVeil").classList.add("show"),500);
     }
   }
+}
+
+/* ================= 메달 ================= */
+/* 정의는 앱에, 획득 기록은 DB에. 판정은 서버(check_and_award_medals)가 실데이터로 수행 */
+const MEDAL_DEFS=[
+ {cat:"🗺️ 여정", items:[1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75].map(n=>({key:"unit-"+n,icon:n===75?"🏆":n>=50?"⛰️":n>=25?"🚩":"👣",name:"UNIT "+n+" 완료"}))},
+ {cat:"📖 표현 수집", items:[10,25,50,75,100,150,200,250,300,350,375].map(n=>({key:"expr-"+n,icon:n>=375?"👑":n>=200?"💎":n>=100?"📚":"📖",name:"표현 "+n+"개"}))},
+ {cat:"🔊 낭독왕", items:[100,300,500,1000,2000,3000,3750].map(n=>({key:"speak-"+n,icon:n>=3000?"🎤":n>=1000?"📢":"🔊",name:"낭독 "+n+"회"}))},
+ {cat:"✍️ 필사왕", items:[30,100,300,600,900,1125].map(n=>({key:"copy-"+n,icon:n>=900?"🖋️":"✍️",name:"따라쓰기 "+n+"회"}))},
+ {cat:"📝 작문왕", items:[20,50,150,300,500,750].map(n=>({key:"write-"+n,icon:n>=500?"🏅":"📝",name:"작문 "+n+"문장"}))}
+];
+const MEDAL_NAME={};
+MEDAL_DEFS.forEach(c=>c.items.forEach(m=>MEDAL_NAME[m.key]=m.name));
+let MY_MEDALS=new Set();
+let NEW_MEDALS=new Set();
+
+function awardCheck(){
+  /* 저장 큐 뒤에 이어붙여 최신 데이터 기준으로 판정 */
+  saveQueue=saveQueue.then(async()=>{
+    try{
+      const rows=await rpc("check_and_award_medals",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+      if(rows.length){
+        rows.forEach(r=>{MY_MEDALS.add(r.medal_key);NEW_MEDALS.add(r.medal_key);});
+        const names=rows.map(r=>MEDAL_NAME[r.medal_key]||r.medal_key);
+        toastRoot("🏅 새 메달! "+names.slice(0,2).join(", ")+(names.length>2?" 외 "+(names.length-2)+"개":""));
+      }
+    }catch(e){}
+  });
+}
+
+async function openMedals(){
+  show("medals");
+  document.getElementById("medalStage").innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_my_medals",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+    MY_MEDALS=new Set(rows.map(r=>r.medal_key));
+  }catch(e){}
+  const total=MEDAL_DEFS.reduce((a,c)=>a+c.items.length,0);
+  const got=MEDAL_DEFS.reduce((a,c)=>a+c.items.filter(m=>MY_MEDALS.has(m.key)).length,0);
+  const cats=MEDAL_DEFS.map(c=>{
+    const gotN=c.items.filter(m=>MY_MEDALS.has(m.key)).length;
+    const grid=c.items.map(m=>{
+      const has=MY_MEDALS.has(m.key);
+      const isNew=NEW_MEDALS.has(m.key);
+      return `<div class="medal ${has?'':'locked'} ${isNew?'new':''}">
+        <div class="mi">${has?m.icon:'🔒'}</div>
+        <div class="mn">${m.name}</div>
+      </div>`;
+    }).join("");
+    return `<div class="mcat">${c.cat}<span class="mc-cnt">${gotN}/${c.items.length}</span></div><div class="mgrid">${grid}</div>`;
+  }).join("");
+  document.getElementById("medalStage").innerHTML=`
+    <div class="msum">
+      <div class="mt">🏅 ${got} / ${total} 획득</div>
+      <div class="md">유닛을 완료하고 낭독·쓰기를 쌓을수록 메달이 열려요. 퀴즈·시험 메달은 곧 추가돼요!</div>
+    </div>
+    ${cats}`;
+  NEW_MEDALS.clear();
 }
 
 let saveQueue=Promise.resolve();
