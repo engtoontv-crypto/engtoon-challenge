@@ -16,10 +16,11 @@
 body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky-soft);
   background-image:radial-gradient(#c9e6f7 1.5px, transparent 1.5px);background-size:22px 22px;
   min-height:100vh;display:flex;justify-content:center}
-.app{width:100%;max-width:430px;background:var(--paper);min-height:100vh;border-left:var(--line);border-right:var(--line)}
+.app{width:100%;max-width:430px;background:var(--paper);min-height:100vh;border-left:var(--line);border-right:var(--line);position:relative}
+section[hidden]{display:none!important}
 
 /* ---------- 로그인 ---------- */
-#loginScr{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:30px 26px;background:var(--sky);background-image:radial-gradient(#7cc7ee 2px, transparent 2px);background-size:26px 26px}
+#scr-login{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:30px 26px;background:var(--sky);background-image:radial-gradient(#7cc7ee 2px, transparent 2px);background-size:26px 26px}
 .lg-wrap{text-align:center;margin-bottom:26px}
 .lg-face{width:84px;height:84px;margin:0 auto 12px;border:3px solid var(--ink);border-radius:50%;background:#fff;box-shadow:5px 5px 0 var(--ink);display:flex;align-items:center;justify-content:center;font-size:40px}
 .lg-title{font-family:'Jua';font-size:27px;color:#fff;text-shadow:2px 2px 0 var(--ink)}
@@ -32,30 +33,103 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
 .lg-err{font-size:12px;color:var(--coral);font-weight:700;text-align:center;margin-top:10px;display:none}
 .lg-err.show{display:block}
 
-/* ---------- 홈 ---------- */
-#homeScr{display:none}
-.topbar{background:var(--sky);border-bottom:var(--line);padding:14px 16px 12px;position:sticky;top:0;z-index:20}
+/* ---------- 공통 ---------- */
+.topbar{background:var(--sky);border-bottom:var(--line);padding:12px 14px 10px;position:sticky;top:0;z-index:20}
 .topbar .row{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.brand{font-family:'Jua';font-size:18px;color:#fff;text-shadow:1.5px 1.5px 0 var(--ink)}
+.brand{font-family:'Jua';font-size:17px;color:#fff;text-shadow:1.5px 1.5px 0 var(--ink)}
+.backbtn{background:rgba(255,255,255,.92);border:2px solid var(--ink);border-radius:9px;font-family:'Jua';font-size:12px;padding:5px 10px;cursor:pointer;color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
 .logoutbtn{background:rgba(255,255,255,.92);border:2px solid var(--ink);border-radius:9px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;color:var(--ink);box-shadow:2px 2px 0 var(--ink)}
-.stage{padding:16px}
+.stage{padding:16px;padding-bottom:40px}
 .card{background:var(--card);border:var(--line);border-radius:var(--r);box-shadow:var(--pop);margin-bottom:16px;overflow:hidden}
 .card-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:var(--line);background:var(--sky-soft)}
-.card-h b{font-family:'Jua';font-size:15.5px;font-weight:400}
+.card-h b{font-family:'Jua';font-size:15px;font-weight:400}
 .card-b{padding:14px;font-size:13.5px;line-height:1.7}
-.hello{font-family:'Jua';font-size:19px;margin-bottom:4px}
-.hello-sub{font-size:12.5px;color:#5a7285}
+.bigbtn{display:block;width:100%;font-family:'Jua';font-size:15.5px;background:var(--sun);color:var(--ink);border:2.5px solid var(--ink);border-radius:12px;padding:13px;cursor:pointer;box-shadow:var(--pop);text-align:center}
+.bigbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.mini{font-family:'Jua';font-size:13px;background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer;box-shadow:var(--pop-sm);color:var(--ink)}
+.mini:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.mini.y{background:var(--sun)}
+.mini.g{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.mini:disabled{opacity:.5}
+.toastRoot{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:13px;font-weight:700;border-radius:999px;padding:9px 18px;z-index:80;display:none;max-width:86%;text-align:center}
+.toastRoot.show{display:block}
+.loading{text-align:center;padding:34px 0;font-family:'Jua';font-size:14px;color:#7b93a4}
+
+/* ---------- 홈 ---------- */
+.hello{font-family:'Jua';font-size:19px;margin-bottom:3px}
+.hello-sub{font-size:12px;color:#5a7285}
 .expbanner{background:#FFF3F1;border:var(--line);border-radius:var(--r);box-shadow:var(--pop);padding:14px;margin-bottom:16px}
 .expbanner .t{font-family:'Jua';font-size:15px;color:var(--coral);margin-bottom:4px}
 .expbanner .d{font-size:12.5px;line-height:1.6}
-.okpill{display:inline-block;font-size:11px;font-weight:800;background:#E4F8EF;color:var(--green);border:1.5px solid var(--green);border-radius:999px;padding:2px 10px}
-.next-note{font-size:12px;color:#7b93a4;line-height:1.7}
+.today-unit{font-family:'Jua';font-size:22px;color:var(--sky-deep);margin-bottom:2px}
+.today-sub{font-size:12px;color:#5a7285;margin-bottom:12px}
+.sumrow{display:flex;gap:9px;margin-bottom:16px}
+.sumtile{flex:1;background:var(--card);border:var(--line);border-radius:12px;box-shadow:var(--pop-sm);padding:11px 8px;text-align:center}
+.sumtile .v{font-family:'Jua';font-size:18px;color:var(--sky-deep)}
+.sumtile .k{font-size:10.5px;font-weight:700;color:#7b93a4;margin-top:2px}
+
+/* ---------- 유닛 목록 ---------- */
+.ugrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.ucell{aspect-ratio:1;border:2px solid var(--ink);border-radius:11px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Nunito';font-weight:800;font-size:14px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.ucell span{font-size:9px;font-family:'Jua';font-weight:400;margin-top:1px}
+.ucell.done{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.ucell.part{background:var(--sun)}
+.ucell.next{background:var(--sky);color:#fff;text-shadow:1px 1px 0 var(--ink);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.ucell.locked{background:#f0f4f6;color:#c2ced6;box-shadow:none;border-color:#dbe4ea;cursor:default}
+.ulegend{font-size:11px;color:#7b93a4;margin-top:12px;line-height:1.7}
+
+/* ---------- 학습 화면 ---------- */
+.pills{display:flex;gap:7px;margin-bottom:14px}
+.pill{flex:1;text-align:center;font-family:'Jua';font-size:13px;border:2px solid var(--ink);border-radius:999px;background:#fff;padding:7px 0;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.pill.on{background:var(--sky);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.pill.ok{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.exp-title{font-family:'Nunito';font-weight:800;font-size:21px}
+.exp-mean{font-family:'Jua';font-size:14px;color:var(--sky-deep);margin:2px 0 8px}
+.exp-desc{font-size:12.5px;line-height:1.75;color:#40607a;background:var(--sky-soft);border-radius:10px;padding:10px 12px}
+.steplbl{display:inline-block;font-family:'Jua';font-size:12px;background:var(--ink);color:#fff;border-radius:8px;padding:2px 10px;margin-bottom:8px}
+.sent{font-family:'Nunito';font-weight:800;font-size:17px;line-height:1.5}
+.sent-ko{font-size:12.5px;color:#5a7285;margin-top:3px}
+.speakrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.cntbar{flex:1;height:12px;background:#eef2f5;border-radius:999px;overflow:hidden;border:1.5px solid #dbe4ea}
+.cntbar>i{display:block;height:100%;background:var(--sky);border-radius:999px;transition:width .25s}
+.cntnum{font-family:'Jua';font-size:13px;min-width:40px;text-align:right}
+.copyrow{display:flex;gap:8px;margin-top:10px}
+.copyrow input{flex:1;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Nunito';min-width:0}
+.copychecks{display:flex;gap:6px;margin-top:4px}
+.cc{width:26px;height:26px;border:2px solid var(--ink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;background:#fff}
+.cc.on{background:var(--green);color:#fff}
+.copyfb{font-size:11.5px;font-weight:700;margin-top:7px}
+.prac{border:2px solid var(--ink);border-radius:12px;background:#fff;box-shadow:var(--pop-sm);padding:12px;margin-bottom:12px}
+.prac-q{font-size:13.5px;font-weight:700;margin-bottom:8px}
+.prac textarea{width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Nunito';resize:vertical;min-height:44px}
+.prac-hintbtn{font-size:11px;font-weight:800;color:var(--sky-deep);background:var(--sky-soft);border:none;border-radius:999px;padding:4px 11px;cursor:pointer;margin-bottom:8px}
+.prac-hint{font-size:12px;color:#5a7285;background:var(--sky-soft);border-radius:9px;padding:7px 11px;margin-bottom:8px;display:none}
+.prac-hint.show{display:block}
+.prac-btns{display:flex;gap:8px;margin-top:9px}
+.model{margin-top:10px;background:#FFF9E3;border:2px dashed var(--sun);border-radius:10px;padding:10px 12px}
+.model .ml{font-family:'Jua';font-size:11.5px;color:#B8860B;margin-bottom:4px}
+.model .ma{font-family:'Nunito';font-weight:800;font-size:14px;line-height:1.5}
+.model .mine{font-size:12px;color:#5a7285;margin-top:2px;line-height:1.5;word-break:break-word}
+.donetag{display:inline-block;font-size:11px;font-weight:800;background:#E4F8EF;color:var(--green);border:1.5px solid var(--green);border-radius:999px;padding:2px 10px}
+.navbtns{display:flex;gap:9px;margin-top:4px}
+.navbtns .mini{flex:1;text-align:center}
+
+/* ---------- 유닛 완료 오버레이 ---------- */
+.veil{position:fixed;inset:0;background:rgba(30,58,79,.72);z-index:60;display:none;align-items:center;justify-content:center;padding:28px}
+.veil.show{display:flex}
+.vmodal{width:100%;max-width:360px;background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:6px 6px 0 rgba(0,0,0,.3);padding:26px 20px;text-align:center}
+.vmodal .em{font-size:52px}
+.vmodal h2{font-family:'Jua';font-size:21px;margin:8px 0 4px}
+.vmodal p{font-size:13px;color:#5a7285;line-height:1.7;margin-bottom:16px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <div id="loginScr">
+  <!-- 로그인 -->
+  <section id="scr-login">
     <div class="lg-wrap">
       <div class="lg-face">😊</div>
       <div class="lg-title">잉툰 챌린지</div>
@@ -67,48 +141,62 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
       <label>비밀번호</label>
       <input id="lg-pw" type="password" placeholder="비밀번호" autocomplete="current-password">
       <button class="lg-btn" id="lg-btn" onclick="doLogin()">시작하기 ▶</button>
-      <div class="lg-err" id="lg-err">아이디 또는 비밀번호가 올바르지 않아요</div>
+      <div class="lg-err" id="lg-err"></div>
     </div>
-  </div>
+  </section>
 
-  <div id="homeScr">
+  <!-- 홈 -->
+  <section id="scr-home" hidden>
     <div class="topbar">
       <div class="row">
         <div class="brand">잉툰 챌린지</div>
         <button class="logoutbtn" onclick="doLogout()">로그아웃</button>
       </div>
     </div>
-    <div class="stage">
-      <div class="expbanner" id="expBanner" style="display:none">
-        <div class="t">⏰ 이용 기간이 종료됐어요</div>
-        <div class="d">그동안의 기록은 유지돼요. 연장은 잉툰쌤에게 문의해 주세요!</div>
+    <div class="stage" id="homeStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
+  <!-- 유닛 목록 -->
+  <section id="scr-units" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="show('home')">‹ 홈</button>
+        <div class="brand">📚 유닛 목록</div>
+        <span style="width:52px"></span>
       </div>
-      <div class="card">
-        <div class="card-h"><b>👋 환영해요!</b></div>
-        <div class="card-b">
-          <div class="hello" id="helloName"></div>
-          <div class="hello-sub" id="helloSub"></div>
-          <div style="margin-top:10px"><span class="okpill" id="connPill">✅ 서버 연결 정상</span></div>
-        </div>
+    </div>
+    <div class="stage" id="unitsStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
+  <!-- 학습 -->
+  <section id="scr-study" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="leaveStudy()">‹ 나가기</button>
+        <div class="brand" id="studyTitle">UNIT</div>
+        <span style="width:52px"></span>
       </div>
-      <div class="card">
-        <div class="card-h"><b>🚧 준비 중이에요</b></div>
-        <div class="card-b">
-          <div class="next-note">
-            로그인이 성공적으로 연결됐어요! 🎉<br>
-            다음 업데이트에서 오늘의 유닛 학습(낭독 → 따라쓰기 → 작문)이 열립니다.<br>
-            조금만 기다려 주세요.
-          </div>
-        </div>
-      </div>
+    </div>
+    <div class="stage" id="studyStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
+  <div class="veil" id="unitVeil">
+    <div class="vmodal">
+      <div class="em">🎉</div>
+      <h2 id="veilTitle">UNIT 완료!</h2>
+      <p>오늘의 표현을 전부 끝냈어요.<br>내일 다음 유닛에서 만나요!</p>
+      <button class="bigbtn" onclick="closeVeil()">좋아요! ▶</button>
     </div>
   </div>
 
+  <div class="toastRoot" id="toastRoot"></div>
 </div>
 
 <script>
 const SUPA_URL="https://axwkoviaxacxkbxtouwh.supabase.co";
 const SUPA_KEY="sb_publishable_lQCcI5UMHOlVfL8yunPc9Q_lJZSiBhY";
+const CHALLENGE_ID=1;
+const SKEY="engtoon_challenge_student";
 
 async function rpc(name, params){
   const r=await fetch(SUPA_URL+"/rest/v1/rpc/"+name,{
@@ -121,24 +209,22 @@ async function rpc(name, params){
   return t?JSON.parse(t):null;
 }
 
-const SKEY="engtoon_challenge_student";
+let ME=null;        /* {id, name, nickname, expires_at} */
+let UNITS=[];       /* [{unit_no,total,done}] */
+let EXPIRED=false;
 
-function showHome(s){
-  document.getElementById("loginScr").style.display="none";
-  document.getElementById("homeScr").style.display="block";
-  const nick=s.nickname||s.name;
-  document.getElementById("helloName").textContent=nick+"님, 반가워요!";
-  const today=new Date(); today.setHours(0,0,0,0);
-  const exp=new Date(s.expires_at+"T00:00:00");
-  const dl=Math.round((exp-today)/86400000);
-  if(dl<0){
-    document.getElementById("expBanner").style.display="block";
-    document.getElementById("helloSub").textContent="이용 기간: "+s.expires_at+" 까지 (만료됨)";
-  }else{
-    document.getElementById("helloSub").textContent="이용 기간: "+s.expires_at+" 까지 (D-"+dl+")";
-  }
+function toastRoot(msg){
+  const t=document.getElementById("toastRoot");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
+}
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study"};
+function show(name){
+  for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
+  window.scrollTo(0,0);
 }
 
+/* ================= 로그인 ================= */
 async function doLogin(){
   const id=document.getElementById("lg-id").value.trim();
   const pw=document.getElementById("lg-pw").value;
@@ -150,33 +236,314 @@ async function doLogin(){
   try{
     const rows=await rpc("student_login",{p_login_id:id,p_pw:pw});
     if(!rows||!rows.length){
-      err.textContent="아이디 또는 비밀번호가 올바르지 않아요";
-      err.classList.add("show");
+      err.textContent="아이디 또는 비밀번호가 올바르지 않아요";err.classList.add("show");
     }else{
-      localStorage.setItem(SKEY,JSON.stringify(rows[0]));
-      showHome(rows[0]);
+      ME=rows[0];
+      localStorage.setItem(SKEY,JSON.stringify(ME));
+      await enterHome();
     }
   }catch(e){
-    err.textContent="서버 연결에 실패했어요. 잠시 후 다시 시도해 주세요";
-    err.classList.add("show");
+    err.textContent="서버 연결에 실패했어요. 잠시 후 다시 시도해 주세요";err.classList.add("show");
   }
   btn.disabled=false;btn.textContent="시작하기 ▶";
 }
-
 function doLogout(){
-  localStorage.removeItem(SKEY);
-  document.getElementById("homeScr").style.display="none";
-  document.getElementById("loginScr").style.display="flex";
-  document.getElementById("lg-id").value="";
-  document.getElementById("lg-pw").value="";
+  localStorage.removeItem(SKEY);ME=null;UNITS=[];
+  show("login");
+  document.getElementById("lg-id").value="";document.getElementById("lg-pw").value="";
 }
 
-/* 세션 복원 */
+/* ================= 홈 ================= */
+function daysLeftFn(){
+  const today=new Date();today.setHours(0,0,0,0);
+  return Math.round((new Date(ME.expires_at+"T00:00:00")-today)/86400000);
+}
+function nextUnitNo(){
+  for(const u of UNITS){ if(u.done<u.total) return u.unit_no; }
+  return null;
+}
+function unitState(u){
+  const nxt=nextUnitNo();
+  if(u.done>=u.total) return "done";
+  if(u.unit_no===nxt) return u.done>0?"part":"next";
+  return "locked";
+}
+async function enterHome(){
+  show("home");
+  document.getElementById("homeStage").innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    UNITS=await rpc("get_my_units",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+  }catch(e){
+    document.getElementById("homeStage").innerHTML='<div class="loading">데이터를 불러오지 못했어요.<br>새로고침 해주세요.</div>';return;
+  }
+  const dl=daysLeftFn();
+  EXPIRED=dl<0;
+  const doneUnits=UNITS.filter(u=>u.done>=u.total).length;
+  const doneExprs=UNITS.reduce((a,u)=>a+u.done,0);
+  const nxt=nextUnitNo();
+  const nick=ME.nickname||ME.name;
+  document.getElementById("homeStage").innerHTML=`
+    ${EXPIRED?`<div class="expbanner"><div class="t">⏰ 이용 기간이 종료됐어요</div><div class="d">그동안의 기록은 유지돼요. 연장은 잉툰쌤에게 문의해 주세요!</div></div>`:''}
+    <div class="card">
+      <div class="card-b">
+        <div class="hello">${escapeHtml(nick)}님, 반가워요! 👋</div>
+        <div class="hello-sub">이용 기간 ${ME.expires_at} 까지 ${dl>=0?`(D-${dl})`:'(만료)'}</div>
+      </div>
+    </div>
+    <div class="sumrow">
+      <div class="sumtile"><div class="v">${doneUnits}</div><div class="k">완료 유닛</div></div>
+      <div class="sumtile"><div class="v">${doneExprs}</div><div class="k">배운 표현</div></div>
+      <div class="sumtile"><div class="v">${UNITS.length}</div><div class="k">전체 유닛</div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><b>📖 오늘의 학습</b></div>
+      <div class="card-b">
+        ${nxt?`
+        <div class="today-unit">UNIT ${nxt}</div>
+        <div class="today-sub">낭독 → 따라쓰기 → 작문 · 예상 20분</div>
+        ${EXPIRED?`<div class="hello-sub">이용 기간이 끝나 새 학습은 잠겨 있어요.</div>`
+        :`<button class="bigbtn" onclick="openStudy(${nxt})">학습 시작하기 ▶</button>`}`
+        :`<div class="today-unit">🏆 전체 완주!</div>
+        <div class="today-sub">모든 유닛을 완료했어요. 정말 대단해요!</div>`}
+      </div>
+    </div>
+    <button class="mini" style="width:100%;text-align:center" onclick="openUnits()">📚 전체 유닛 목록 보기</button>`;
+}
+
+/* ================= 유닛 목록 ================= */
+function openUnits(){
+  show("units");
+  const cells=UNITS.map(u=>{
+    const st=unitState(u);
+    const clickable=st!=="locked"&&!(EXPIRED&&st!=="done");
+    const label=st==="done"?"완료":st==="part"?`${u.done}/${u.total}`:st==="next"?"오늘":"🔒";
+    return `<div class="ucell ${st}" ${clickable?`onclick="openStudy(${u.unit_no})"`:''}>${u.unit_no}<span>${label}</span></div>`;
+  }).join("");
+  document.getElementById("unitsStage").innerHTML=`
+    <div class="ugrid">${cells}</div>
+    <div class="ulegend">🟦 오늘 학습 · 🟨 진행 중 · 🟩 완료 · 🔒 이전 유닛을 끝내면 열려요<br>완료한 유닛은 언제든 다시 볼 수 있어요.</div>`;
+}
+
+/* ================= 학습 ================= */
+let EXP=[];
+let curUnit=null;
+let cur=0;
+let unitDoneShown=false;
+
+async function openStudy(unitNo){
+  const u=UNITS.find(x=>x.unit_no===unitNo);
+  if(u&&unitState(u)==="locked"){toastRoot("이전 유닛을 먼저 끝내면 열려요");return;}
+  if(EXPIRED&&u&&u.done<u.total){toastRoot("이용 기간이 끝나 새 학습은 잠겨 있어요");return;}
+  curUnit=unitNo;unitDoneShown=false;
+  show("study");
+  document.getElementById("studyTitle").textContent="UNIT "+unitNo;
+  document.getElementById("studyStage").innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_unit_expressions",{p_student_id:ME.id,p_unit_no:unitNo,p_challenge_id:CHALLENGE_ID})||[];
+    EXP=rows.map(r=>({
+      id:r.id, ord:r.order_no, title:r.title, mean:r.mean, desc:r.description,
+      sent:r.sentence, ko:r.sentence_ko, mp3:r.mp3_url,
+      prac:(r.practice||[]),
+      speak:r.speak_count||0, copy:r.copy_count||0,
+      answers:(Array.isArray(r.answers)&&r.answers.length?r.answers.slice():[]),
+      done:!!r.completed
+    }));
+    EXP.forEach(e=>{while(e.answers.length<e.prac.length)e.answers.push(null);});
+    cur=EXP.findIndex(e=>!e.done);
+    if(cur<0)cur=0;
+    renderStudy();
+  }catch(e){
+    document.getElementById("studyStage").innerHTML='<div class="loading">불러오지 못했어요. 뒤로 갔다가 다시 시도해 주세요.</div>';
+  }
+}
+
+function leaveStudy(){enterHome();}
+
+function normSent(s){
+  return (s||"").toLowerCase().replace(/[\u2019\u2018]/g,"'").replace(/[\u201C\u201D]/g,'"')
+    .replace(/[.,!?;:"']/g,"").replace(/\s+/g," ").trim();
+}
+function speakIt(text){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="en-US";u.rate=0.92;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function playSent(){
+  const e=EXP[cur];
+  if(e.mp3){
+    const a=new Audio(e.mp3);
+    a.play().catch(()=>speakIt(e.sent));
+  }else speakIt(e.sent);
+}
+function escapeHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function renderStudy(){
+  const e=EXP[cur];
+  const pills=EXP.map((x,i)=>`<div class="pill ${x.done?'ok':''} ${i===cur?'on':''}" onclick="gotoExp(${i})">${x.done?'✓':x.ord}</div>`).join("");
+  const speakDone=e.speak>=10, copyDone=e.copy>=3;
+
+  const pracHtml=e.prac.map((p,pi)=>{
+    const a=e.answers[pi];
+    return `<div class="prac">
+      <div class="prac-q">${pi+1}. ${escapeHtml(p.q)}</div>
+      ${p.hint?`<button class="prac-hintbtn" onclick="toggleHint(${pi})">💡 힌트 보기</button>
+      <div class="prac-hint" id="hint-${pi}">힌트: ${escapeHtml(p.hint)}</div>`:''}
+      ${a&&a.mine?`
+        <div class="model">
+          <div class="ml">✍️ 내가 쓴 문장</div>
+          <div class="mine">${escapeHtml(a.mine)}</div>
+          <div class="ml" style="margin-top:8px">📖 모범답안 — 내 문장과 비교해 보세요</div>
+          <div class="ma">${escapeHtml(p.answer||'')}</div>
+        </div>`
+      :`<textarea id="prac-${pi}" placeholder="영어로 써 보세요" ${EXPIRED?'disabled':''}></textarea>
+        <div class="prac-btns">
+          <button class="mini y" onclick="submitPrac(${pi})" ${EXPIRED?'disabled':''}>제출하고 모범답안 보기</button>
+        </div>`}
+    </div>`;
+  }).join("");
+
+  document.getElementById("studyStage").innerHTML=`
+    <div class="pills">${pills}</div>
+    <div class="card">
+      <div class="card-b">
+        <div class="exp-title">${escapeHtml(e.title)} ${e.done?'<span class="donetag">완료</span>':''}</div>
+        <div class="exp-mean">${escapeHtml(e.mean)}</div>
+        <div class="exp-desc">${escapeHtml(e.desc||'')}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-b">
+        <span class="steplbl">STEP 1 · 소리내어 읽기</span>
+        <div class="sent">${escapeHtml(e.sent)}</div>
+        <div class="sent-ko">${escapeHtml(e.ko||'')}</div>
+        <div class="speakrow">
+          <button class="mini" onclick="playSent()">🔊 듣기</button>
+          <div class="cntbar"><i style="width:${Math.min(100,e.speak*10)}%"></i></div>
+          <div class="cntnum">${Math.min(10,e.speak)}/10</div>
+        </div>
+        <div style="margin-top:10px">
+          ${speakDone?'<span class="donetag">✓ 낭독 완료</span>'
+          :`<button class="mini y" onclick="addSpeak()" ${EXPIRED?'disabled':''}>따라 읽었어요 +1</button>`}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-b">
+        <span class="steplbl">STEP 2 · 따라쓰기 3회</span>
+        <div class="copychecks">${[0,1,2].map(i=>`<div class="cc ${i<e.copy?'on':''}">${i<e.copy?'✓':i+1}</div>`).join('')}</div>
+        ${copyDone?'<div style="margin-top:9px"><span class="donetag">✓ 따라쓰기 완료</span></div>'
+        :`<div class="copyrow">
+            <input id="copyInput" placeholder="위 문장을 똑같이 써 보세요" autocomplete="off" ${EXPIRED?'disabled':''}>
+            <button class="mini y" onclick="checkCopy()" ${EXPIRED?'disabled':''}>확인</button>
+          </div>
+          <div class="copyfb" id="copyFb"></div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-b">
+        <span class="steplbl">STEP 3 · 문장 만들기</span>
+        <div style="font-size:12px;color:#7b93a4;margin-bottom:11px">채점은 없어요. 제출하면 모범답안이 열리고, 스스로 비교하며 배워요.</div>
+        ${pracHtml}
+      </div>
+    </div>
+
+    <div class="navbtns">
+      <button class="mini" onclick="gotoExp(${cur-1})" ${cur<=0?'disabled':''}>‹ 이전 표현</button>
+      <button class="mini ${e.done?'g':''}" onclick="gotoExp(${cur+1})" ${cur>=EXP.length-1?'disabled':''}>다음 표현 ›</button>
+    </div>`;
+  const ci=document.getElementById("copyInput");
+  if(ci) ci.addEventListener("keydown",ev=>{if(ev.key==="Enter")checkCopy();});
+}
+
+function gotoExp(i){if(i<0||i>=EXP.length)return;cur=i;renderStudy();}
+function toggleHint(pi){document.getElementById("hint-"+pi).classList.toggle("show");}
+
+function addSpeak(){
+  const e=EXP[cur];
+  if(e.speak>=10)return;
+  e.speak++;
+  if(e.speak===10){saveExp(e);toastRoot("낭독 10회 완료! 🎉");}
+  renderStudy();
+  checkExpDone();
+}
+
+function checkCopy(){
+  const e=EXP[cur];
+  const inp=document.getElementById("copyInput");
+  if(!inp)return;
+  if(normSent(inp.value)===normSent(e.sent)){
+    e.copy++;
+    saveExp(e);
+    renderStudy();
+    if(e.copy>=3)toastRoot("따라쓰기 3회 완료! ✍️");
+    checkExpDone();
+  }else{
+    const fb=document.getElementById("copyFb");
+    fb.textContent="음.. 문장과 조금 달라요. 다시 한번 살펴볼까요?";
+    fb.style.color="var(--coral)";
+  }
+}
+
+function submitPrac(pi){
+  const e=EXP[cur];
+  const ta=document.getElementById("prac-"+pi);
+  const v=(ta&&ta.value||"").trim();
+  if(!v){toastRoot("문장을 먼저 써 주세요");return;}
+  e.answers[pi]={mine:v};
+  saveExp(e);
+  renderStudy();
+  checkExpDone();
+}
+
+function checkExpDone(){
+  const e=EXP[cur];
+  if(e.done)return;
+  if(e.speak>=10&&e.copy>=3&&e.answers.every(a=>a&&a.mine)){
+    e.done=true;
+    saveExp(e);
+    /* 홈 카운터 즉시 반영 */
+    const u=UNITS.find(x=>x.unit_no===curUnit);
+    if(u)u.done=Math.min(u.total,u.done+1);
+    renderStudy();
+    toastRoot(`표현 ${e.ord} 완료! 🎉`);
+    if(EXP.every(x=>x.done)&&!unitDoneShown){
+      unitDoneShown=true;
+      document.getElementById("veilTitle").textContent=`UNIT ${curUnit} 완료!`;
+      setTimeout(()=>document.getElementById("unitVeil").classList.add("show"),500);
+    }
+  }
+}
+
+let saveQueue=Promise.resolve();
+function saveExp(e){
+  saveQueue=saveQueue
+    .then(()=>rpc("save_progress",{
+      p_student_id:ME.id, p_expression_id:e.id,
+      p_speak:e.speak, p_copy:e.copy,
+      p_answers:e.answers, p_completed:e.done
+    }))
+    .catch(()=>{toastRoot("저장이 잠시 안 됐어요. 인터넷을 확인해 주세요");});
+}
+
+function closeVeil(){
+  document.getElementById("unitVeil").classList.remove("show");
+  enterHome();
+}
+
+/* ================= 세션 복원 ================= */
 (function(){
   const saved=localStorage.getItem(SKEY);
-  if(saved){try{showHome(JSON.parse(saved));}catch(e){localStorage.removeItem(SKEY);}}
+  if(saved){
+    try{ME=JSON.parse(saved);enterHome();}
+    catch(e){localStorage.removeItem(SKEY);}
+  }
 })();
-
 document.getElementById("lg-pw").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
 </script>
 </body>
