@@ -132,6 +132,36 @@ section[hidden]{display:none!important}
 .msum .mt{font-family:'Jua';font-size:16px}
 .msum .md{font-size:12px;font-weight:700;margin-top:2px}
 
+/* ---------- 복습 퀴즈 ---------- */
+.qz-bar{height:10px;background:#eef2f5;border-radius:999px;overflow:hidden;border:1.5px solid #dbe4ea;margin-bottom:14px}
+.qz-bar>i{display:block;height:100%;background:var(--sky);border-radius:999px;transition:width .3s}
+.qz-kicker{display:inline-block;font-family:'Jua';font-size:11.5px;background:var(--ink);color:#fff;border-radius:8px;padding:2px 10px;margin-bottom:9px}
+.qz-q{font-size:15.5px;font-weight:700;line-height:1.6;margin-bottom:4px}
+.qz-q .en{font-family:'Nunito';font-weight:800;font-size:19px}
+.qz-sub{font-size:12px;color:#7b93a4;margin-bottom:11px}
+.qz-opt{display:block;width:100%;text-align:left;border:2px solid var(--ink);border-radius:11px;background:#fff;box-shadow:var(--pop-sm);padding:11px 13px;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:9px;color:var(--ink);font-family:'Noto Sans KR'}
+.qz-opt:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.qz-opt.right{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.qz-opt.wrong{background:var(--coral);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.qz-opt:disabled{opacity:.92}
+.qz-fb{border-radius:11px;padding:11px 13px;font-size:12.5px;line-height:1.65;margin-top:4px;font-weight:700}
+.qz-fb.good{background:#E4F8EF;color:#177a52}
+.qz-fb.bad{background:#FFEDEA;color:#c0392b}
+.qz-input{display:flex;gap:8px}
+.qz-input input{flex:1;border:2px solid var(--ink);border-radius:10px;padding:11px 12px;font-size:14px;font-family:'Nunito';min-width:0}
+.qz-words{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:11px}
+.qz-word{font-family:'Nunito';font-weight:800;font-size:13.5px;border:2px solid var(--ink);border-radius:9px;background:#fff;box-shadow:2px 2px 0 var(--ink);padding:7px 11px;cursor:pointer;color:var(--ink)}
+.qz-word.used{opacity:.28;pointer-events:none}
+.qz-built{min-height:44px;border:2px dashed var(--sky-deep);border-radius:11px;background:var(--sky-soft);padding:9px 11px;font-family:'Nunito';font-weight:800;font-size:14px;margin-bottom:9px;line-height:1.6}
+.qz-nextwrap{margin-top:12px}
+.qz-result{text-align:center;padding:8px 0 4px}
+.qz-result .em{font-size:50px}
+.qz-result h2{font-family:'Jua';font-size:21px;margin:6px 0 2px}
+.qz-result .sc{font-family:'Nunito';font-weight:800;font-size:30px;color:var(--sky-deep)}
+.qz-result p{font-size:12.5px;color:#5a7285;line-height:1.7;margin:6px 0 14px}
+.qz-wrongitem{border:2px solid var(--ink);border-radius:11px;background:#fff;box-shadow:var(--pop-sm);padding:11px 13px;margin-bottom:10px;font-size:12.5px;line-height:1.65;text-align:left}
+.qz-wrongitem .we{font-family:'Nunito';font-weight:800;font-size:14px;color:var(--sky-deep)}
+
 /* ---------- 유닛 완료 오버레이 ---------- */
 .veil{position:fixed;inset:0;background:rgba(30,58,79,.72);z-index:60;display:none;align-items:center;justify-content:center;padding:28px}
 .veil.show{display:flex}
@@ -209,6 +239,18 @@ section[hidden]{display:none!important}
     <div class="stage" id="medalStage"><div class="loading">불러오는 중...</div></div>
   </section>
 
+  <!-- 복습 퀴즈 -->
+  <section id="scr-quiz" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="quitQuiz()">‹ 나가기</button>
+        <div class="brand">🧩 복습 퀴즈</div>
+        <div class="brand" id="quizBadge" style="font-size:13px">0/13</div>
+      </div>
+    </div>
+    <div class="stage" id="quizStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <div class="veil" id="unitVeil">
     <div class="vmodal">
       <div class="em">🎉</div>
@@ -247,7 +289,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals"};
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -336,10 +378,11 @@ async function enterHome(){
         <div class="today-sub">모든 유닛을 완료했어요. 정말 대단해요!</div>`}
       </div>
     </div>
-    <div style="display:flex;gap:9px">
+    <div style="display:flex;gap:9px;margin-bottom:9px">
       <button class="mini" style="flex:1;text-align:center" onclick="openUnits()">📚 유닛 목록</button>
       <button class="mini" style="flex:1;text-align:center" onclick="openMedals()">🏅 내 메달</button>
-    </div>`;
+    </div>
+    <button class="mini y" style="width:100%;text-align:center" onclick="openQuizIntro()">🧩 복습 퀴즈 풀기</button>`;
 }
 
 /* ================= 유닛 목록 ================= */
@@ -553,14 +596,207 @@ function checkExpDone(){
   }
 }
 
+/* ================= 복습 퀴즈 ================= */
+let QZ=[];        /* 세션 문제들 */
+let qi=0, qScore=0, qWrong=[], qAnswered=false, qOrderPick=[];
+
+function openQuizIntro(){
+  if(EXPIRED){toastRoot("이용 기간이 끝나 퀴즈는 잠겨 있어요");return;}
+  show("quiz");
+  document.getElementById("quizBadge").textContent="";
+  document.getElementById("quizStage").innerHTML=`
+    <div class="card"><div class="card-b" style="text-align:center">
+      <div style="font-size:44px">🧩</div>
+      <div style="font-family:'Jua';font-size:19px;margin:6px 0 3px">복습 퀴즈</div>
+      <div style="font-size:12.5px;color:#5a7285;line-height:1.7;margin-bottom:14px">
+        지금까지 배운 표현들이 다양한 유형으로 나와요.<br>매번 13문제가 랜덤이라 여러 번 풀어도 새로워요!
+      </div>
+      <button class="bigbtn" onclick="startQuiz()">퀴즈 시작하기 ▶</button>
+    </div></div>`;
+}
+
+async function startQuiz(){
+  document.getElementById("quizStage").innerHTML='<div class="loading">문제를 뽑는 중...</div>';
+  try{
+    QZ=await rpc("get_quiz_session",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID,p_size:13})||[];
+  }catch(e){QZ=[];}
+  if(!QZ.length){
+    document.getElementById("quizStage").innerHTML='<div class="loading">아직 풀 수 있는 문제가 없어요.<br>먼저 유닛 학습을 진행해 주세요!</div>';return;
+  }
+  qi=0;qScore=0;qWrong=[];
+  renderQuiz();
+}
+
+function quitQuiz(){enterHome();}
+
+function renderQuiz(){
+  if(qi>=QZ.length){finishQuiz();return;}
+  qAnswered=false;qOrderPick=[];
+  const q=QZ[qi];const p=q.payload;
+  document.getElementById("quizBadge").textContent=(qi+1)+"/"+QZ.length;
+  let inner="";
+  if(q.qtype==="match"){
+    inner=`<span class="qz-kicker">뜻 매칭</span>
+      <div class="qz-q"><span class="en">${escapeHtml(p.q)}</span></div>
+      <div class="qz-sub">이 표현의 뜻으로 알맞은 것은?</div>
+      ${p.opts.map((o,i)=>`<button class="qz-opt" id="opt-${i}" onclick="pickOpt(${i})">${escapeHtml(o)}</button>`).join("")}`;
+  }else if(q.qtype==="rmatch"){
+    inner=`<span class="qz-kicker">표현 고르기</span>
+      <div class="qz-q">"${escapeHtml(p.q)}"</div>
+      <div class="qz-sub">이 뜻에 맞는 표현은?</div>
+      ${p.opts.map((o,i)=>`<button class="qz-opt" id="opt-${i}" onclick="pickOpt(${i})" style="font-family:'Nunito';font-weight:800">${escapeHtml(o)}</button>`).join("")}`;
+  }else if(q.qtype==="typein"){
+    inner=`<span class="qz-kicker">표현 직접 쓰기</span>
+      <div class="qz-q">"${escapeHtml(p.mean)}"</div>
+      <div class="qz-sub">이 뜻의 영어 표현을 직접 써 보세요</div>
+      <div class="qz-input">
+        <input id="qzInput" placeholder="영어 표현" autocomplete="off">
+        <button class="mini y" onclick="checkTypein()">확인</button>
+      </div>
+      <div id="qzFb"></div>`;
+  }else if(q.qtype==="dictation"){
+    inner=`<span class="qz-kicker">듣고 받아쓰기</span>
+      <div class="qz-sub">문장을 듣고 그대로 써 보세요 ${p.ko?`<br>(${escapeHtml(p.ko)})`:''}</div>
+      <button class="mini" onclick="speakIt(${JSON.stringify(p.sent).replace(/"/g,'&quot;')})" style="margin-bottom:10px">🔊 다시 듣기</button>
+      <div class="qz-input">
+        <input id="qzInput" placeholder="들은 문장을 쓰세요" autocomplete="off">
+        <button class="mini y" onclick="checkDict()">확인</button>
+      </div>
+      <div id="qzFb"></div>`;
+    setTimeout(()=>speakIt(p.sent),350);
+  }else if(q.qtype==="order"){
+    const words=p.target.replace(/[.?!]$/,"").split(/\s+/);
+    const shuffled=words.map((w,i)=>({w,i})).sort(()=>Math.random()-0.5);
+    inner=`<span class="qz-kicker">문장 순서 배열</span>
+      <div class="qz-q">"${escapeHtml(p.ko||'')}"</div>
+      <div class="qz-sub">단어를 순서대로 눌러 문장을 완성하세요</div>
+      <div class="qz-built" id="qzBuilt"></div>
+      <div class="qz-words">${shuffled.map((x,si)=>`<button class="qz-word" id="qw-${si}" data-w="${escapeHtml(x.w)}" onclick="pickWord(${si})">${escapeHtml(x.w)}</button>`).join("")}</div>
+      <button class="mini" onclick="resetOrder()">🔄 다시 놓기</button>
+      <div id="qzFb"></div>`;
+  }
+  document.getElementById("quizStage").innerHTML=`
+    <div class="qz-bar"><i style="width:${Math.round(qi/QZ.length*100)}%"></i></div>
+    <div class="card"><div class="card-b">${inner}
+      <div class="qz-nextwrap" id="qzNext" style="display:none">
+        <button class="bigbtn" onclick="nextQuiz()">${qi+1<QZ.length?'다음 문제 ▶':'결과 보기 ▶'}</button>
+      </div>
+    </div></div>`;
+  const inp=document.getElementById("qzInput");
+  if(inp)inp.addEventListener("keydown",e=>{if(e.key==="Enter"){if(q.qtype==="typein")checkTypein();else checkDict();}});
+}
+
+function markAnswered(ok, fbHtml){
+  if(qAnswered)return;
+  qAnswered=true;
+  if(ok)qScore++;
+  else qWrong.push(QZ[qi]);
+  const fb=document.getElementById("qzFb");
+  if(fb)fb.innerHTML=`<div class="qz-fb ${ok?'good':'bad'}">${fbHtml}</div>`;
+  document.getElementById("qzNext").style.display="block";
+}
+
+function pickOpt(i){
+  if(qAnswered)return;
+  const q=QZ[qi];const p=q.payload;
+  const ok=i===p.c;
+  for(let k=0;k<p.opts.length;k++){
+    const b=document.getElementById("opt-"+k);
+    b.disabled=true;
+    if(k===p.c)b.classList.add("right");
+    else if(k===i&&!ok)b.classList.add("wrong");
+  }
+  qAnswered=true;
+  if(ok)qScore++;else qWrong.push(q);
+  const wrap=document.createElement("div");
+  wrap.innerHTML=`<div class="qz-fb ${ok?'good':'bad'}">${ok?'정답! 🎉':'아쉬워요!'} <b>${escapeHtml(p.exp)}</b> = ${escapeHtml(q.qtype==="match"?p.opts[p.c]:p.q)}</div>`;
+  document.getElementById("qzNext").parentNode.insertBefore(wrap,document.getElementById("qzNext"));
+  document.getElementById("qzNext").style.display="block";
+}
+
+function normLoose(s){
+  return (s||"").toLowerCase().replace(/[\u2019\u2018]/g,"'").replace(/[\u201C\u201D]/g,'"')
+    .replace(/[.,!?;:"'~]/g,"").replace(/\s+/g," ").trim();
+}
+function checkTypein(){
+  if(qAnswered)return;
+  const q=QZ[qi];const p=q.payload;
+  const v=document.getElementById("qzInput").value;
+  const ok=normLoose(v)===normLoose(p.answer);
+  markAnswered(ok, ok?`정답! 🎉 <b>${escapeHtml(p.answer)}</b>`:`정답은 <b>${escapeHtml(p.answer)}</b> 이에요`);
+}
+function checkDict(){
+  if(qAnswered)return;
+  const q=QZ[qi];const p=q.payload;
+  const v=document.getElementById("qzInput").value;
+  const ok=normLoose(v)===normLoose(p.sent);
+  markAnswered(ok, ok?`정답! 🎉`:`들은 문장: <b>${escapeHtml(p.sent)}</b>`);
+}
+function pickWord(si){
+  if(qAnswered)return;
+  const b=document.getElementById("qw-"+si);
+  if(!b||b.classList.contains("used"))return;
+  b.classList.add("used");
+  qOrderPick.push(b.getAttribute("data-w"));
+  document.getElementById("qzBuilt").textContent=qOrderPick.join(" ");
+  const q=QZ[qi];const p=q.payload;
+  const words=p.target.replace(/[.?!]$/,"").split(/\s+/);
+  if(qOrderPick.length===words.length){
+    const ok=normLoose(qOrderPick.join(" "))===normLoose(p.target);
+    markAnswered(ok, ok?`정답! 🎉 <b>${escapeHtml(p.target)}</b>`:`정답 문장: <b>${escapeHtml(p.target)}</b>`);
+  }
+}
+function resetOrder(){
+  if(qAnswered)return;
+  qOrderPick=[];
+  document.getElementById("qzBuilt").textContent="";
+  document.querySelectorAll(".qz-word").forEach(b=>b.classList.remove("used"));
+}
+function nextQuiz(){qi++;renderQuiz();}
+
+function finishQuiz(){
+  const total=QZ.length;
+  const pct=Math.round(qScore/total*100);
+  /* 결과 저장 + 메달 판정 */
+  saveQueue=saveQueue
+    .then(()=>rpc("save_quiz_result",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID,p_score:qScore,p_total:total,
+      p_detail:qWrong.map(w=>({id:w.id,exp:w.payload.exp}))}))
+    .catch(()=>{});
+  awardCheck();
+  const wrongHtml=qWrong.length?`
+    <div style="font-family:'Jua';font-size:14px;margin:16px 0 9px;text-align:left">📌 틀린 문제 다시 보기</div>
+    ${qWrong.map(w=>{
+      const p=w.payload;
+      const line=w.qtype==="dictation"||w.qtype==="order"
+        ?escapeHtml(p.sent||p.target)
+        :`${escapeHtml(p.exp)}`;
+      return `<div class="qz-wrongitem"><span class="we">${line}</span><br>${escapeHtml(p.mean||p.q||p.ko||'')}</div>`;
+    }).join("")}`:"";
+  document.getElementById("quizBadge").textContent="";
+  document.getElementById("quizStage").innerHTML=`
+    <div class="card"><div class="card-b">
+      <div class="qz-result">
+        <div class="em">${pct===100?'💯':pct>=70?'🎉':'💪'}</div>
+        <h2>${pct===100?'퍼펙트!':pct>=70?'잘했어요!':'조금만 더!'}</h2>
+        <div class="sc">${qScore} / ${total}</div>
+        <p>${pct===100?'전부 맞혔어요. 대단해요!':'틀린 표현은 아래에서 다시 확인해 보세요.'}<br>매번 다른 문제가 나오니 또 풀어봐도 좋아요.</p>
+        <button class="bigbtn" onclick="startQuiz()">🔄 한 번 더 풀기</button>
+        <button class="mini" style="width:100%;text-align:center;margin-top:9px" onclick="enterHome()">홈으로</button>
+      </div>
+      ${wrongHtml}
+    </div></div>`;
+}
+
 /* ================= 메달 ================= */
 /* 정의는 앱에, 획득 기록은 DB에. 판정은 서버(check_and_award_medals)가 실데이터로 수행 */
 const MEDAL_DEFS=[
- {cat:"🗺️ 여정", items:[1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75].map(n=>({key:"unit-"+n,icon:n===75?"🏆":n>=50?"⛰️":n>=25?"🚩":"👣",name:"UNIT "+n+" 완료"}))},
+ {cat:"🗺️ 여정", items:[1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75].map(n=>({key:"unit-"+n,icon:n===75?"🏆":n>=50?"🥇":n>=25?"🥈":"🥉",name:"UNIT "+n+" 완료"}))},
  {cat:"📖 표현 수집", items:[10,25,50,75,100,150,200,250,300,350,375].map(n=>({key:"expr-"+n,icon:n>=375?"👑":n>=200?"💎":n>=100?"📚":"📖",name:"표현 "+n+"개"}))},
  {cat:"🔊 낭독왕", items:[100,300,500,1000,2000,3000,3750].map(n=>({key:"speak-"+n,icon:n>=3000?"🎤":n>=1000?"📢":"🔊",name:"낭독 "+n+"회"}))},
  {cat:"✍️ 필사왕", items:[30,100,300,600,900,1125].map(n=>({key:"copy-"+n,icon:n>=900?"🖋️":"✍️",name:"따라쓰기 "+n+"회"}))},
- {cat:"📝 작문왕", items:[20,50,150,300,500,750].map(n=>({key:"write-"+n,icon:n>=500?"🏅":"📝",name:"작문 "+n+"문장"}))}
+ {cat:"📝 작문왕", items:[20,50,150,300,500,750].map(n=>({key:"write-"+n,icon:n>=500?"🏅":"📝",name:"작문 "+n+"문장"}))},
+ {cat:"🧩 복습 퀴즈", items:[1,5,10,20,30,50].map(n=>({key:"quiz-"+n,icon:n>=30?"🎖️":"🧩",name:"퀴즈 "+n+"회"}))},
+ {cat:"💯 퍼펙트", items:[1,5,10].map(n=>({key:"qperfect-"+n,icon:"💯",name:"만점 "+n+"회"}))}
 ];
 const MEDAL_NAME={};
 MEDAL_DEFS.forEach(c=>c.items.forEach(m=>MEDAL_NAME[m.key]=m.name));
