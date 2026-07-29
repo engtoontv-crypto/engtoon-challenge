@@ -787,7 +787,7 @@ async function drawCertificate(info){
   }
   x.fillStyle="#1E3A4F";
   x.font="700 30px 'Noto Sans KR', sans-serif";
-  ["위 학생은 잉툰TV","『"+info.challenge_name+"』","전 "+info.units_total+"개 유닛의 학습 과정을","성실히 완주하였기에","이 증서를 수여합니다."]
+  ["위 학생은 잉툰TV의",info.challenge_name+"의","모든 학습 과정을","성실히 완주하였기에","이 증서를 수여합니다."]
     .forEach((l,i)=>x.fillText(l,W/2,690+i*56));
   x.fillStyle="#2E90C8";
   x.font="800 26px 'Noto Sans KR', sans-serif";
@@ -796,12 +796,12 @@ async function drawCertificate(info){
   const d=info.last_done?new Date(info.last_done+"T00:00:00"):new Date();
   x.fillStyle="#1E3A4F";
   x.font="700 28px 'Noto Sans KR', sans-serif";
-  x.fillText(d.getFullYear()+"년 "+(d.getMonth()+1)+"월 "+d.getDate()+"일",W/2,1170);
-  x.font="44px Jua, sans-serif";x.fillText("잉툰TV · 잉툰쌤",W/2,1250);
+  x.fillText(d.getFullYear()+"년 "+(d.getMonth()+1)+"월 "+d.getDate()+"일",W/2,1140);
+  x.font="44px Jua, sans-serif";x.fillText("잉툰TV · 잉툰쌤",W/2,1270);
   x.strokeStyle="#FF7B6B";x.lineWidth=5;
-  x.beginPath();x.arc(W/2+250,1235,46,0,Math.PI*2);x.stroke();
+  x.beginPath();x.arc(W/2+250,1255,46,0,Math.PI*2);x.stroke();
   x.fillStyle="#FF7B6B";x.font="30px Jua, sans-serif";
-  x.fillText("잉툰",W/2+250,1228);x.fillText("도장",W/2+250,1260);
+  x.fillText("잉툰",W/2+250,1248);x.fillText("도장",W/2+250,1280);
   return cv;
 }
 
