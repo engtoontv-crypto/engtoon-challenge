@@ -112,6 +112,7 @@ section[hidden]{display:none!important}
 .model .ma{font-family:'Nunito';font-weight:800;font-size:14px;line-height:1.5}
 .model .mine{font-size:12px;color:#5a7285;margin-top:2px;line-height:1.5;word-break:break-word}
 .donetag{display:inline-block;font-size:11px;font-weight:800;background:#E4F8EF;color:var(--green);border:1.5px solid var(--green);border-radius:999px;padding:2px 10px}
+.tagpill{display:inline-block;font-size:10px;font-weight:800;background:var(--sky-deep);color:#fff;border-radius:6px;padding:2px 7px;margin-right:5px}
 .navbtns{display:flex;gap:9px;margin-top:4px}
 .navbtns .mini{flex:1;text-align:center}
 
@@ -197,6 +198,7 @@ section[hidden]{display:none!important}
     <div class="topbar">
       <div class="row">
         <div class="brand">잉툰 챌린지</div>
+        <button class="backbtn" onclick="openSettings()" style="margin-right:6px">⚙️ 설정</button>
         <button class="logoutbtn" onclick="doLogout()">로그아웃</button>
       </div>
     </div>
@@ -263,6 +265,36 @@ section[hidden]{display:none!important}
     <div class="stage" id="qnaStage"><div class="loading">불러오는 중...</div></div>
   </section>
 
+  <!-- 설정 -->
+  <section id="scr-settings" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="enterHome()">‹ 홈</button>
+        <div class="brand">⚙️ 내 정보 설정</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage">
+      <div class="card">
+        <div class="card-h"><b>닉네임</b></div>
+        <div class="card-b">
+          <div style="font-size:11.5px;color:#7b93a4;margin-bottom:9px">Q&amp;A와 랭킹에 표시될 이름이에요. 설정 안 하면 아이디가 대신 보여요.</div>
+          <input id="setNickInput" placeholder="닉네임" style="width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Noto Sans KR';margin-bottom:10px;box-sizing:border-box">
+          <button class="mini y" style="width:100%;text-align:center" onclick="saveNickname()">닉네임 저장</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-h"><b>비밀번호 변경</b></div>
+        <div class="card-b">
+          <input id="setPw1" type="password" placeholder="새 비밀번호" style="width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:9px;box-sizing:border-box">
+          <input id="setPw2" type="password" placeholder="새 비밀번호 확인" style="width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:6px;box-sizing:border-box">
+          <div id="setPwFb" style="font-size:11.5px;font-weight:700;color:var(--coral);min-height:16px;margin-bottom:8px"></div>
+          <button class="mini y" style="width:100%;text-align:center" onclick="savePassword()">비밀번호 변경하기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="veil" id="qnaVeil">
     <div class="vmodal" style="text-align:left">
       <div style="font-family:'Jua';font-size:16px;margin-bottom:4px">💬 잉툰쌤에게 질문하기</div>
@@ -314,7 +346,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna"};
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -335,6 +367,7 @@ async function doLogin(){
       err.textContent="아이디 또는 비밀번호가 올바르지 않아요";err.classList.add("show");
     }else{
       ME=rows[0];
+      ME.login_id=id;
       localStorage.setItem(SKEY,JSON.stringify(ME));
       await enterHome();
     }
@@ -377,7 +410,7 @@ async function enterHome(){
   const doneUnits=UNITS.filter(u=>u.done>=u.total).length;
   const doneExprs=UNITS.reduce((a,u)=>a+u.done,0);
   const nxt=nextUnitNo();
-  const nick=ME.nickname||ME.name;
+  const nick=ME.nickname||ME.login_id||ME.name;
   document.getElementById("homeStage").innerHTML=`
     ${EXPIRED?`<div class="expbanner"><div class="t">⏰ 이용 기간이 종료됐어요</div><div class="d">그동안의 기록은 유지돼요. 연장은 잉툰쌤에게 문의해 주세요!</div></div>`:''}
     <div class="card">
@@ -840,6 +873,40 @@ function finishQuiz(){
     </div></div>`;
 }
 
+/* ================= 설정 ================= */
+function openSettings(){
+  show("settings");
+  document.getElementById("setNickInput").value=ME.nickname||"";
+  document.getElementById("setPw1").value="";
+  document.getElementById("setPw2").value="";
+  document.getElementById("setPwFb").textContent="";
+}
+
+async function saveNickname(){
+  const v=document.getElementById("setNickInput").value.trim();
+  try{
+    await rpc("student_update_nickname",{p_student_id:ME.id,p_nickname:v});
+    ME.nickname=v||null;
+    localStorage.setItem(SKEY,JSON.stringify(ME));
+    toastRoot(v?"닉네임이 저장됐어요":"닉네임을 비웠어요. 이제 아이디로 표시돼요");
+  }catch(e){toastRoot("저장 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+async function savePassword(){
+  const p1=document.getElementById("setPw1").value;
+  const p2=document.getElementById("setPw2").value;
+  const fb=document.getElementById("setPwFb");
+  fb.textContent="";
+  if(!p1||p1.length<4){fb.textContent="비밀번호는 4자 이상으로 입력해 주세요";return;}
+  if(p1!==p2){fb.textContent="두 비밀번호가 서로 달라요";return;}
+  try{
+    await rpc("student_change_password",{p_student_id:ME.id,p_new_password:p1});
+    document.getElementById("setPw1").value="";
+    document.getElementById("setPw2").value="";
+    toastRoot("비밀번호가 변경됐어요");
+  }catch(e){fb.textContent="변경 실패: 잠시 후 다시 시도해 주세요";}
+}
+
 /* ================= Q&A ================= */
 let qnaTab='all';   /* 'all' | 'mine' */
 let qnaUnitFilter=null;
@@ -897,7 +964,7 @@ async function renderQna(){
       const list=rows.length?rows.map(r=>`
         <div class="card"><div class="card-b" style="padding:12px 14px">
           <div style="font-size:11px;font-weight:800;color:var(--sky-deep);margin-bottom:5px">
-            ${r.is_best?'⭐ ':''}UNIT ${r.unit_no}${r.expr_title?' · '+escapeHtml(r.expr_title):''} · ${escapeHtml(r.nickname)}
+            ${r.is_best?'⭐ ':''}UNIT ${r.unit_no}${r.expr_title?' · '+escapeHtml(r.expr_title):''} · ${r.cohort_name?`<span class="tagpill">${escapeHtml(r.cohort_name)}</span>`:''}${escapeHtml(r.nickname)}
           </div>
           <div style="font-size:13.5px;font-weight:700;margin-bottom:8px">Q. ${escapeHtml(r.question)}</div>
           <div style="background:var(--sky-soft);border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.7">

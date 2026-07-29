@@ -379,24 +379,47 @@ function renderQnaAdmin(){
         claimHtml=`<button class="co-btn" style="margin-bottom:8px" onclick="claimQna(${q.id})">✍️ 답변 시작 — 다른 선생님에게 "작성 중" 표시</button>`;
       }
     }
+    const isSuper=me&&me.role==="super";
+    const modBtns=isSuper?`
+      ${q.answer?`<button class="co-btn" style="font-size:11px" onclick="hideQna(${q.id},${!q.is_private})">${q.is_private?'🙉 공개로 전환':'🙈 숨기기'}</button>`:''}
+      <button class="co-btn del" style="font-size:11px" onclick="deleteQna(${q.id},'${escQ(q.student_name)}')">🗑 삭제</button>
+    `:'';
     return `
     <div style="border:1.5px solid #e3edf3;border-radius:11px;padding:11px 12px;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--sky-deep);margin-bottom:5px">
         <span>${escQ(q.student_name)}</span>
         <span>· UNIT ${q.unit_no}${q.expr_title?' · '+escQ(q.expr_title):''}</span>
-        ${q.is_private?'<span>🔒비공개</span>':''}
+        ${q.is_private?'<span>🔒비공개/숨김</span>':''}
         ${q.is_best?'<span>⭐베스트</span>':''}
         <span style="margin-left:auto;color:#7b93a4;font-weight:700">${fmtD(q.created_at)}</span>
       </div>
       <div style="font-size:13px;font-weight:700;margin-bottom:8px">Q. ${escQ(q.question)}</div>
       ${claimHtml}
       <textarea id="ans-${q.id}" placeholder="답변을 입력하세요" style="width:100%;border:1.5px solid #cfe0ea;border-radius:9px;padding:9px 11px;font-size:13px;min-height:60px;resize:vertical;font-family:'Noto Sans KR'">${escQ(q.answer||'')}</textarea>
-      <div style="display:flex;gap:7px;margin-top:8px">
+      <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
         <button class="pbtn" style="flex:1;font-size:12.5px;padding:8px" onclick="saveAnswer(${q.id})">${q.answer?'✏️ 답변 수정':'✅ 답변 등록'}</button>
         ${q.answer&&!q.is_private?`<button class="pbtn" style="flex:1;font-size:12.5px;padding:8px;background:${q.is_best?'#fff':'var(--sun)'};color:var(--ink);text-shadow:none" onclick="setBest(${q.id},${!q.is_best})">${q.is_best?'⭐ 베스트 해제':'⭐ 베스트 지정'}</button>`:''}
       </div>
+      ${modBtns?`<div style="display:flex;gap:7px;margin-top:7px">${modBtns}</div>`:''}
     </div>`;
   }).join("");
+}
+
+async function hideQna(id,hidden){
+  try{
+    await rpc("set_qna_hidden",{p_qna_id:id,p_hidden:hidden});
+    toast(hidden?"숨겼어요 (모두의 질문 목록에서 제외)":"다시 공개했어요");
+    await loadQnaAdmin();
+  }catch(e){toast("변경 실패: 7단계C SQL이 실행됐는지 확인해 주세요");}
+}
+
+async function deleteQna(id,name){
+  if(!confirm(`${name} 학생의 질문을 완전히 삭제할까요?\n이 작업은 되돌릴 수 없어요.`))return;
+  try{
+    await rpc("delete_qna",{p_qna_id:id});
+    toast("질문을 삭제했어요");
+    await loadQnaAdmin();
+  }catch(e){toast("삭제 실패: 7단계C SQL이 실행됐는지 확인해 주세요");}
 }
 
 async function claimQna(id){
