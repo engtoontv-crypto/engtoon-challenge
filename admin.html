@@ -218,6 +218,16 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
     </div>
   </div>
 
+  <div id="certVeil" style="display:none;position:fixed;inset:0;background:rgba(30,58,79,.55);z-index:60;align-items:center;justify-content:center;padding:18px">
+    <div style="background:#fff;border-radius:14px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;padding:14px">
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <b style="font-family:'Jua';font-size:15px">📜 수료증</b>
+        <button onclick="adminCloseCert()" style="margin-left:auto;font-family:'Jua';font-size:13px;border:1.5px solid #cfe0ea;border-radius:8px;background:#fff;padding:5px 12px;cursor:pointer">닫기 ✕</button>
+      </div>
+      <div id="certVeilBody"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -720,19 +730,110 @@ async function loadDashboard(){
   try{
     const rows=await rpc("cohort_dashboard",{p_cohort_id:parseInt(v)})||[];
     if(!rows.length){box.innerHTML='<div class="empty">이 기수에 배정된 학생이 없어요</div>';return;}
+    const coh=COHORTS.find(c=>String(c.id)===String(v));
+    const CH_UNITS={1:75,2:50};
+    const utotal=coh?CH_UNITS[coh.challenge_id]||75:75;
+    const chId=coh?coh.challenge_id:1;
     box.innerHTML=rows.map((r,i)=>{
       const rank=i<3?['🥇','🥈','🥉'][i]:(i+1);
       const last=r.last_active?String(r.last_active).slice(5,10).replace('-','/'):'—';
+      const finished=Number(r.units_done)>=utotal;
       return `<div class="dash-row">
         <span class="dash-rank">${rank}</span>
         <span class="dash-name">${dEsc(r.name)}${r.nickname&&r.nickname!==r.name?` <span style="font-weight:400;color:#7b93a4;font-size:10.5px">(${dEsc(r.nickname)})</span>`:''}</span>
         <span class="dash-stat">📗 ${r.units_done}유닛</span>
         <span class="dash-stat">📖 ${r.exprs_done}</span>
         <span class="dash-stat">🧩 ${r.quiz_count}</span>
-        <span class="dash-last">${last}</span>
+        ${finished?`<button class="co-btn add" style="font-size:10px;padding:4px 8px" onclick="adminOpenCert(${r.student_id},${chId},'${dEsc(r.name)}')">📜 수료증</button>`:`<span class="dash-last">${last}</span>`}
       </div>`;
-    }).join("")+'<div class="hintline" style="margin-top:10px">순위는 완료 유닛 기준 · 📖 완료 표현 수 · 🧩 퀴즈 풀이 횟수 · 마지막은 최근 학습일</div>';
+    }).join("")+'<div class="hintline" style="margin-top:10px">순위는 완료 유닛 기준 · 📖 완료 표현 수 · 🧩 퀴즈 풀이 횟수 · 완주 학생은 📜 수료증 발급 가능</div>';
   }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요 (7단계B SQL이 실행됐는지 확인해 주세요)</div>';}
+}
+
+/* ================= 수료증 (관리자 발급) ================= */
+async function drawCertificate(info){
+  if(document.fonts&&document.fonts.ready){
+    try{await Promise.all([
+      document.fonts.load('64px Jua'),document.fonts.load('700 26px "Noto Sans KR"')
+    ]);}catch(e){}
+  }
+  const W=1000,H=1414;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const x=cv.getContext("2d");
+  x.fillStyle="#FBFBF4";x.fillRect(0,0,W,H);
+  x.strokeStyle="#47AEE4";x.lineWidth=22;x.strokeRect(30,30,W-60,H-60);
+  x.strokeStyle="#1E3A4F";x.lineWidth=4;x.strokeRect(62,62,W-124,H-124);
+  x.fillStyle="#FFD34D";
+  [[62,62],[938,62],[62,1352],[938,1352]].forEach(p=>{
+    x.beginPath();x.arc(p[0],p[1],14,0,Math.PI*2);x.fill();
+    x.strokeStyle="#1E3A4F";x.lineWidth=3;x.stroke();x.fillStyle="#FFD34D";
+  });
+  x.textAlign="center";
+  x.font="110px serif";x.fillText("🏆",W/2,235);
+  x.fillStyle="#1E3A4F";
+  x.font="76px Jua, sans-serif";x.fillText("수 료 증",W/2,352);
+  x.fillStyle="#7b93a4";
+  x.font="800 24px Nunito, sans-serif";x.fillText("CERTIFICATE OF COMPLETION",W/2,396);
+  const dispName=info.nickname&&info.nickname!==info.student_name
+    ? (info.student_name+" ("+info.nickname+")") : info.student_name;
+  x.fillStyle="#2E90C8";
+  x.font="62px Jua, sans-serif";x.fillText(dispName,W/2,530);
+  x.strokeStyle="#FFD34D";x.lineWidth=6;
+  const nw=Math.min(560,x.measureText(dispName).width+70);
+  x.beginPath();x.moveTo(W/2-nw/2,552);x.lineTo(W/2+nw/2,552);x.stroke();
+  if(info.cohort_name){
+    x.fillStyle="#7b93a4";
+    x.font="700 26px 'Noto Sans KR', sans-serif";x.fillText(info.cohort_name,W/2,596);
+  }
+  x.fillStyle="#1E3A4F";
+  x.font="700 30px 'Noto Sans KR', sans-serif";
+  ["위 학생은 잉툰TV","『"+info.challenge_name+"』","전 "+info.units_total+"개 유닛의 학습 과정을","성실히 완주하였기에","이 증서를 수여합니다."]
+    .forEach((l,i)=>x.fillText(l,W/2,690+i*56));
+  x.fillStyle="#2E90C8";
+  x.font="800 26px 'Noto Sans KR', sans-serif";
+  x.fillText("표현 "+info.exprs_done+"개 · 낭독 "+info.speak_total+"회 · 작문 "+info.write_total+"문장",W/2,1030);
+  x.fillText("퀴즈 "+info.quiz_count+"회 · 메달 "+info.medal_count+"개",W/2,1072);
+  const d=info.last_done?new Date(info.last_done+"T00:00:00"):new Date();
+  x.fillStyle="#1E3A4F";
+  x.font="700 28px 'Noto Sans KR', sans-serif";
+  x.fillText(d.getFullYear()+"년 "+(d.getMonth()+1)+"월 "+d.getDate()+"일",W/2,1170);
+  x.font="44px Jua, sans-serif";x.fillText("잉툰TV · 잉툰쌤",W/2,1250);
+  x.strokeStyle="#FF7B6B";x.lineWidth=5;
+  x.beginPath();x.arc(W/2+250,1235,46,0,Math.PI*2);x.stroke();
+  x.fillStyle="#FF7B6B";x.font="30px Jua, sans-serif";
+  x.fillText("잉툰",W/2+250,1228);x.fillText("도장",W/2+250,1260);
+  return cv;
+}
+
+let _acertCanvas=null,_acertName="";
+async function adminOpenCert(studentId,challengeId,name){
+  const veil=document.getElementById("certVeil");
+  const body=document.getElementById("certVeilBody");
+  veil.style.display="flex";
+  body.innerHTML='<div class="empty">수료증을 만드는 중... 🎨</div>';
+  try{
+    const rows=await rpc("get_certificate_info",{p_student_id:studentId,p_challenge_id:challengeId});
+    const info=rows&&rows[0];
+    if(!info){body.innerHTML='<div class="empty">정보를 불러오지 못했어요</div>';return;}
+    _acertCanvas=await drawCertificate(info);
+    _acertName=name;
+    body.innerHTML=`
+      <img src="${_acertCanvas.toDataURL("image/png")}" style="width:100%;border-radius:10px;margin-bottom:12px" alt="수료증">
+      <button class="pbtn" style="width:100%" onclick="adminSaveCert()">🖼 이미지로 저장하기</button>`;
+  }catch(e){
+    body.innerHTML='<div class="empty">불러오지 못했어요 (11단계 SQL이 실행됐는지 확인해 주세요)</div>';
+  }
+}
+function adminCloseCert(){document.getElementById("certVeil").style.display="none";}
+function adminSaveCert(){
+  if(!_acertCanvas)return;
+  _acertCanvas.toBlob(b=>{
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);
+    a.download="잉툰챌린지_수료증_"+_acertName+".png";
+    document.body.appendChild(a);a.click();a.remove();
+    toast("수료증 이미지를 저장했어요");
+  },"image/png");
 }
 
 /* 세션 복원 */

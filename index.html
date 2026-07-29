@@ -329,6 +329,18 @@ section[hidden]{display:none!important}
     <div class="stage" id="weeksStage"><div class="loading">불러오는 중...</div></div>
   </section>
 
+  <!-- 수료증 -->
+  <section id="scr-cert" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="enterHome()">‹ 홈</button>
+        <div class="brand">📜 수료증</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage" id="certStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <div class="veil" id="qnaVeil">
     <div class="vmodal" style="text-align:left">
       <div style="font-family:'Jua';font-size:16px;margin-bottom:4px">💬 잉툰쌤에게 질문하기</div>
@@ -383,7 +395,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks"};
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks",cert:"scr-cert"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -455,15 +467,20 @@ async function enterHome(){
   const doneUnits=UNITS.filter(u=>u.done>=u.total).length;
   const doneExprs=UNITS.reduce((a,u)=>a+u.done,0);
   const nxt=nextUnitNo();
+  const finished=!nxt; /* 전체 완주 */
   const nick=ME.nickname||ME.login_id||ME.name;
   document.getElementById("homeStage").innerHTML=`
-    ${EXPIRED?`<div class="expbanner"><div class="t">⏰ 이용 기간이 종료됐어요</div><div class="d">그동안의 기록은 유지돼요. 연장은 잉툰쌤에게 문의해 주세요!</div></div>`:''}
+    ${EXPIRED?(finished
+      ?`<div class="expbanner" style="background:#FFF9E3"><div class="t" style="color:#B8860B">🎓 완주 졸업생이에요!</div><div class="d">챌린지를 끝까지 해냈어요. 아래 기록은 계속 간직돼요.</div></div>`
+      :`<div class="expbanner"><div class="t">⏰ 이용 기간이 종료됐어요</div><div class="d">그동안의 기록은 유지돼요. 연장은 잉툰쌤에게 문의해 주세요!</div></div>`)
+    :(dl<=7?`<div class="expbanner" style="background:#FFF9E3"><div class="t" style="color:#B8860B">⏰ 이용 기간이 D-${dl} 남았어요</div><div class="d">연장이 필요하면 잉툰쌤에게 미리 문의해 주세요!</div></div>`:'')}
     <div class="card">
       <div class="card-b">
         <div class="hello">${escapeHtml(nick)}님, 반가워요! 👋</div>
         <div class="hello-sub">이용 기간 ${ME.expires_at} 까지 ${dl>=0?`(D-${dl})`:'(만료)'}</div>
       </div>
     </div>
+    ${EXPIRED?'<div id="gradStats"></div>':''}
     <div class="sumrow">
       <div class="sumtile"><div class="v">${doneUnits}</div><div class="k">완료 유닛</div></div>
       <div class="sumtile"><div class="v">${doneExprs}</div><div class="k">배운 표현</div></div>
@@ -475,10 +492,11 @@ async function enterHome(){
         ${nxt?`
         <div class="today-unit">UNIT ${nxt}</div>
         <div class="today-sub">낭독 → 따라쓰기 → 작문 · 예상 20분</div>
-        ${EXPIRED?`<div class="hello-sub">이용 기간이 끝나 새 학습은 잠겨 있어요.</div>`
+        ${EXPIRED?`<div class="hello-sub">이용 기간이 끝나 새 학습은 잠겨 있어요. 완료한 유닛은 계속 볼 수 있어요!</div>`
         :`<button class="bigbtn" onclick="openStudy(${nxt})">학습 시작하기 ▶</button>`}`
         :`<div class="today-unit">🏆 전체 완주!</div>
-        <div class="today-sub">모든 유닛을 완료했어요. 정말 대단해요!</div>`}
+        <div class="today-sub">모든 유닛을 완료했어요. 정말 대단해요!</div>
+        <button class="bigbtn" onclick="openCert()">📜 내 수료증 보기 ▶</button>`}
       </div>
     </div>
     <div style="display:flex;gap:9px;margin-bottom:9px">
@@ -490,6 +508,34 @@ async function enterHome(){
       <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A${QNA_ENABLED?'':' <span style="font-size:9px;color:#7b93a4">(준비중)</span>'}</button>
     </div>
     <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>`;
+  if(EXPIRED)loadGradStats();
+}
+
+/* 만료/졸업생: 나의 기록 요약 */
+async function loadGradStats(){
+  const box=document.getElementById("gradStats");
+  if(!box)return;
+  try{
+    const rows=await rpc("get_my_stats",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID});
+    const s=rows&&rows[0];
+    if(!s)return;
+    box.innerHTML=`
+      <div class="card">
+        <div class="card-h"><b>📜 나의 챌린지 기록</b></div>
+        <div class="card-b">
+          <div class="sumrow" style="margin-bottom:9px">
+            <div class="sumtile"><div class="v">${s.exprs_done}</div><div class="k">배운 표현</div></div>
+            <div class="sumtile"><div class="v">${s.speak_total}</div><div class="k">낭독 횟수</div></div>
+            <div class="sumtile"><div class="v">${s.write_total}</div><div class="k">쓴 문장</div></div>
+          </div>
+          <div class="sumrow" style="margin-bottom:0">
+            <div class="sumtile"><div class="v">${s.quiz_count}</div><div class="k">퀴즈 풀이</div></div>
+            <div class="sumtile"><div class="v">${s.quiz_best}점</div><div class="k">퀴즈 최고점</div></div>
+            <div class="sumtile"><div class="v">${s.medal_count}</div><div class="k">획득 메달</div></div>
+          </div>
+        </div>
+      </div>`;
+  }catch(e){}
 }
 
 /* ================= 유닛 목록 ================= */
@@ -1014,6 +1060,122 @@ async function renderWeeks(){
   }catch(e){
     stage.innerHTML=nav+tabs+'<div class="loading">불러오지 못했어요 (8단계 SQL이 실행됐는지 확인해 주세요)</div>';
   }
+}
+
+/* ================= 수료증 ================= */
+async function drawCertificate(info){
+  /* info: get_certificate_info 결과 1행 */
+  if(document.fonts&&document.fonts.ready){
+    try{await Promise.all([
+      document.fonts.load('64px Jua'),document.fonts.load('700 26px "Noto Sans KR"'),
+      document.fonts.load('800 30px Nunito')
+    ]);}catch(e){}
+  }
+  const W=1000,H=1414;
+  const cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const x=cv.getContext("2d");
+  /* 배경 */
+  x.fillStyle="#FBFBF4";x.fillRect(0,0,W,H);
+  /* 이중 테두리 */
+  x.strokeStyle="#47AEE4";x.lineWidth=22;x.strokeRect(30,30,W-60,H-60);
+  x.strokeStyle="#1E3A4F";x.lineWidth=4;x.strokeRect(62,62,W-124,H-124);
+  /* 모서리 장식 점 */
+  x.fillStyle="#FFD34D";
+  [[62,62],[938,62],[62,1352],[938,1352]].forEach(p=>{
+    x.beginPath();x.arc(p[0],p[1],14,0,Math.PI*2);x.fill();
+    x.strokeStyle="#1E3A4F";x.lineWidth=3;x.stroke();x.fillStyle="#FFD34D";
+  });
+  x.textAlign="center";
+  /* 트로피 */
+  x.font="110px serif";x.fillText("🏆",W/2,235);
+  /* 제목 */
+  x.fillStyle="#1E3A4F";
+  x.font="76px Jua, sans-serif";x.fillText("수 료 증",W/2,352);
+  x.fillStyle="#7b93a4";
+  x.font="800 24px Nunito, sans-serif";x.fillText("CERTIFICATE OF COMPLETION",W/2,396);
+  /* 이름 */
+  const dispName=info.nickname&&info.nickname!==info.student_name
+    ? (info.student_name+" ("+info.nickname+")") : info.student_name;
+  x.fillStyle="#2E90C8";
+  x.font="62px Jua, sans-serif";x.fillText(dispName,W/2,530);
+  x.strokeStyle="#FFD34D";x.lineWidth=6;
+  const nw=Math.min(560,x.measureText(dispName).width+70);
+  x.beginPath();x.moveTo(W/2-nw/2,552);x.lineTo(W/2+nw/2,552);x.stroke();
+  if(info.cohort_name){
+    x.fillStyle="#7b93a4";
+    x.font="700 26px 'Noto Sans KR', sans-serif";x.fillText(info.cohort_name,W/2,596);
+  }
+  /* 본문 */
+  x.fillStyle="#1E3A4F";
+  x.font="700 30px 'Noto Sans KR', sans-serif";
+  const lines=[
+    "위 학생은 잉툰TV",
+    "『"+info.challenge_name+"』",
+    "전 "+info.units_total+"개 유닛의 학습 과정을",
+    "성실히 완주하였기에",
+    "이 증서를 수여합니다."
+  ];
+  lines.forEach((l,i)=>x.fillText(l,W/2,690+i*56));
+  /* 기록 요약 */
+  x.fillStyle="#2E90C8";
+  x.font="800 26px 'Noto Sans KR', sans-serif";
+  x.fillText("표현 "+info.exprs_done+"개 · 낭독 "+info.speak_total+"회 · 작문 "+info.write_total+"문장",W/2,1030);
+  x.fillText("퀴즈 "+info.quiz_count+"회 · 메달 "+info.medal_count+"개",W/2,1072);
+  /* 날짜 */
+  const d=info.last_done?new Date(info.last_done+"T00:00:00"):new Date();
+  x.fillStyle="#1E3A4F";
+  x.font="700 28px 'Noto Sans KR', sans-serif";
+  x.fillText(d.getFullYear()+"년 "+(d.getMonth()+1)+"월 "+d.getDate()+"일",W/2,1170);
+  /* 서명 */
+  x.font="44px Jua, sans-serif";x.fillText("잉툰TV · 잉툰쌤",W/2,1250);
+  /* 도장 */
+  x.strokeStyle="#FF7B6B";x.lineWidth=5;
+  x.beginPath();x.arc(W/2+250,1235,46,0,Math.PI*2);x.stroke();
+  x.fillStyle="#FF7B6B";x.font="30px Jua, sans-serif";
+  x.fillText("잉툰",W/2+250,1228);x.fillText("도장",W/2+250,1260);
+  return cv;
+}
+
+let _certCanvas=null;
+async function openCert(){
+  show("cert");
+  const stage=document.getElementById("certStage");
+  stage.innerHTML='<div class="loading">수료증을 만드는 중... 🎨</div>';
+  try{
+    const rows=await rpc("get_certificate_info",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID});
+    const info=rows&&rows[0];
+    if(!info){stage.innerHTML='<div class="loading">정보를 불러오지 못했어요</div>';return;}
+    if(Number(info.units_done)<Number(info.units_total)){
+      stage.innerHTML=`<div class="card"><div class="card-b" style="text-align:center;padding:36px 16px">
+        <div style="font-size:44px">🔒</div>
+        <div style="font-family:'Jua';font-size:16px;margin-top:10px">아직 조금 남았어요!</div>
+        <div style="font-size:12.5px;color:#7b93a4;margin-top:6px;line-height:1.7">
+          ${info.units_done} / ${info.units_total} 유닛 완료<br>전체 완주하면 수료증이 열려요. 파이팅! 💪
+        </div></div></div>`;
+      return;
+    }
+    _certCanvas=await drawCertificate(info);
+    const url=_certCanvas.toDataURL("image/png");
+    stage.innerHTML=`
+      <img src="${url}" style="width:100%;border:2.5px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink);margin-bottom:14px" alt="수료증">
+      <button class="bigbtn" onclick="saveCert()">🖼 이미지로 저장하기</button>
+      <div style="font-size:11.5px;color:#7b93a4;text-align:center;margin-top:9px">저장이 안 되면 수료증 이미지를 길게 눌러 저장할 수도 있어요</div>`;
+  }catch(e){
+    stage.innerHTML='<div class="loading">불러오지 못했어요 (11단계 SQL이 실행됐는지 확인해 주세요)</div>';
+  }
+}
+
+function saveCert(){
+  if(!_certCanvas)return;
+  try{
+    _certCanvas.toBlob(b=>{
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(b);
+      a.download="잉툰챌린지_수료증_"+(ME.nickname||ME.login_id||ME.name)+".png";
+      document.body.appendChild(a);a.click();a.remove();
+      toastRoot("수료증 이미지를 저장했어요! 🎉");
+    },"image/png");
+  }catch(e){toastRoot("이미지를 길게 눌러 저장해 주세요");}
 }
 
 /* ================= 설정 ================= */
