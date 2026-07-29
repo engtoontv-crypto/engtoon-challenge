@@ -597,6 +597,14 @@ async function onCohortChange(){
       return;
     }
     const rows=await rpc("get_cohort_students",{p_cohort_id:parseInt(v)})||[];
+    const coh=COHORTS.find(c=>String(c.id)===String(v));
+    const qEnabled=coh?coh.qna_enabled!==false:true;
+    const qnaToggle=(isSuper&&coh)?`
+      <div class="co-row" style="background:#f8fafb;border-radius:9px;padding:8px 10px">
+        <span class="co-name">💬 Q&amp;A</span>
+        <span class="co-sub">${qEnabled?'이 기수는 Q&A 사용 중':'이 기수는 Q&A 미사용 (학생에게 "준비중" 표시)'}</span>
+        <button class="co-btn ${qEnabled?'del':'add'}" onclick="toggleCohortQna(${v},${!qEnabled})">${qEnabled?'🚫 중지':'✅ 켜기'}</button>
+      </div>`:'';
     const list=rows.length?rows.map(s=>`
       <div class="co-row">
         <span class="co-name">${dEsc(s.name)}</span>
@@ -610,10 +618,18 @@ async function onCohortChange(){
         <div class="erow"><label></label><button class="co-btn del" style="width:100%" onclick="deactivateStudent(${s.id},'${dEsc(s.name)}')">🚫 이 학생 비활성화 (탈퇴 처리)</button></div>
       </div>`:''}`).join("")
     :'<div class="empty">아직 배정된 학생이 없어요</div>';
-    box.innerHTML=list+(isSuper?`<button class="pbtn" style="width:100%;margin-top:12px" onclick="openAssign(${v})">➕ 학생 배정</button>`:'');
+    box.innerHTML=qnaToggle+list+(isSuper?`<button class="pbtn" style="width:100%;margin-top:12px" onclick="openAssign(${v})">➕ 학생 배정</button>`:'');
   }catch(e){
     box.innerHTML='<div class="empty">불러오지 못했어요 (7단계B SQL이 실행됐는지 확인해 주세요)</div>';
   }
+}
+
+async function toggleCohortQna(cohortId,enabled){
+  try{
+    await rpc("set_cohort_qna",{p_cohort_id:cohortId,p_enabled:enabled});
+    toast(enabled?"이 기수 Q&A를 켰어요":"이 기수 Q&A를 중지했어요 (학생에게 준비중으로 표시)");
+    await loadCohorts(true);
+  }catch(e){toast("변경 실패: 9단계B SQL이 실행됐는지 확인해 주세요");}
 }
 
 function toggleCoEdit(id){

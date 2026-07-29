@@ -375,6 +375,8 @@ let ME=null;        /* {id, name, nickname, expires_at} */
 let UNITS=[];       /* [{unit_no,total,done}] */
 let EXPIRED=false;
 let UNLOCK_OVERRIDE=null; /* 기수별 오픈 값 (예: 65 = 65번까지 순서상관없이 열림), null이면 순차잠금 그대로 */
+let QNA_ENABLED=true;     /* 기수별 Q&A 사용 여부 */
+let MY_COHORT=null;       /* {cohort_id, cohort_name} | false(미배정) | null(아직 안불러옴) */
 
 function toastRoot(msg){
   const t=document.getElementById("toastRoot");
@@ -438,7 +440,13 @@ async function enterHome(){
   document.getElementById("homeStage").innerHTML='<div class="loading">불러오는 중...</div>';
   try{
     UNITS=await rpc("get_my_units",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
-    try{UNLOCK_OVERRIDE=await rpc("get_student_unlock",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID});}catch(e){UNLOCK_OVERRIDE=null;}
+    try{
+      const flags=await rpc("get_student_flags",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID});
+      const f=flags&&flags[0];
+      UNLOCK_OVERRIDE=f?f.unlock_until_unit:null;
+      QNA_ENABLED=f?f.qna_enabled!==false:true;
+      MY_COHORT=f?{cohort_id:f.cohort_id,cohort_name:f.cohort_name}:false;
+    }catch(e){UNLOCK_OVERRIDE=null;QNA_ENABLED=true;MY_COHORT=false;}
   }catch(e){
     document.getElementById("homeStage").innerHTML='<div class="loading">데이터를 불러오지 못했어요.<br>새로고침 해주세요.</div>';return;
   }
@@ -479,7 +487,7 @@ async function enterHome(){
     </div>
     <div style="display:flex;gap:9px;margin-bottom:9px">
       <button class="mini y" style="flex:1;text-align:center" onclick="openQuizIntro()">🧩 복습 퀴즈</button>
-      <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A</button>
+      <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A${QNA_ENABLED?'':' <span style="font-size:9px;color:#7b93a4">(준비중)</span>'}</button>
     </div>
     <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>`;
 }
@@ -915,7 +923,6 @@ function finishQuiz(){
 const WEEK_SIZE=5; /* 두 챌린지 모두 주당 5유닛 (75/15주, 50/10주) */
 let wkTab='mine';
 let wkNo=1;
-let MY_COHORT=null; /* {cohort_id, cohort_name} | null */
 
 function totalWeeks(){return Math.max(1,Math.ceil(UNITS.length/WEEK_SIZE));}
 
@@ -970,9 +977,11 @@ async function renderWeeks(){
 
   /* 반 전체 보기 */
   try{
-    if(!MY_COHORT){
-      const rows=await rpc("get_my_cohort",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
-      MY_COHORT=rows.length?rows[0]:false;
+    if(MY_COHORT===null){
+      try{
+        const rows=await rpc("get_my_cohort",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+        MY_COHORT=rows.length?rows[0]:false;
+      }catch(e){MY_COHORT=false;}
     }
     if(!MY_COHORT){
       stage.innerHTML=nav+tabs+'<div class="loading">아직 배정된 반이 없어요.<br>선생님께 문의해 주세요!</div>';
@@ -1047,6 +1056,7 @@ let qnaUnitFilter=null;
 let qnaBestOnly=false;
 
 function openQnaModal(){
+  if(!QNA_ENABLED){toastRoot("🚧 질문 게시판은 아직 준비 중이에요");return;}
   if(EXPIRED){toastRoot("이용 기간이 끝나 질문은 잠겨 있어요");return;}
   const e=EXP[cur];
   document.getElementById("qnaTag").textContent=`UNIT ${curUnit} · ${e.title} 에 대한 질문이에요`;
@@ -1069,7 +1079,19 @@ async function submitQna(){
   }catch(err){toastRoot("등록에 실패했어요. 잠시 후 다시 시도해 주세요");}
 }
 
-function openQna(){show("qna");renderQna();}
+function openQna(){
+  show("qna");
+  if(!QNA_ENABLED){
+    document.getElementById("qnaStage").innerHTML=`
+      <div class="card"><div class="card-b" style="text-align:center;padding:40px 16px">
+        <div style="font-size:44px">🚧</div>
+        <div style="font-family:'Jua';font-size:16px;margin-top:10px">Q&amp;A 준비 중이에요</div>
+        <div style="font-size:12.5px;color:#7b93a4;margin-top:6px;line-height:1.7">아직 우리 반에서는 열리지 않았어요.<br>조금만 기다려 주세요!</div>
+      </div></div>`;
+    return;
+  }
+  renderQna();
+}
 function setQnaTab(t){qnaTab=t;renderQna();}
 function setQnaUnit(v){qnaUnitFilter=v?parseInt(v):null;renderQna();}
 function toggleQnaBest(){qnaBestOnly=!qnaBestOnly;renderQna();}
