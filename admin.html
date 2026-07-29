@@ -98,6 +98,17 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
     <div class="stage">
 
       <div class="card">
+        <div class="card-h"><span class="step-no">Q&amp;A</span><b>질문 관리</b><span class="hint" id="qnaCount"></span></div>
+        <div class="card-b">
+          <div class="roletabs">
+            <button class="roletab on" id="qtabWait" onclick="setQnaAdminTab('wait')">⏳ 미답변</button>
+            <button class="roletab" id="qtabDone" onclick="setQnaAdminTab('done')">✅ 답변완료</button>
+          </div>
+          <div id="qnaList"><div class="empty">불러오는 중...</div></div>
+        </div>
+      </div>
+
+      <div class="card">
         <div class="card-h"><span class="step-no">NEW</span><b>새 계정 만들기</b><span class="hint" id="acctHint"></span></div>
         <div class="card-b">
           <div class="roletabs" id="roleTabs" style="display:none">
@@ -182,6 +193,7 @@ function showMain(){
   document.getElementById("acctHint").textContent=isSuper?"학생·관리자 모두 생성 가능":"학생 계정만 생성 가능";
   document.getElementById("na-exp").value=defaultExpiry();
   loadStudents();
+  loadQnaAdmin();
 }
 
 async function doLogin(){
@@ -266,6 +278,73 @@ async function createAdminAcct(){
     toast(e.message.includes("duplicate")?"이미 사용 중인 아이디예요":"생성 실패: 잠시 후 다시 시도해 주세요");
   }
   btn.disabled=false;
+}
+
+/* ================= Q&A 관리 ================= */
+let QNA_ALL=[];
+let qnaAdminTab='wait';
+
+function setQnaAdminTab(t){
+  qnaAdminTab=t;
+  document.getElementById('qtabWait').classList.toggle('on',t==='wait');
+  document.getElementById('qtabDone').classList.toggle('on',t==='done');
+  renderQnaAdmin();
+}
+
+async function loadQnaAdmin(){
+  try{
+    QNA_ALL=await rpc("list_qna_admin",{p_challenge_id:1})||[];
+  }catch(e){QNA_ALL=[];}
+  renderQnaAdmin();
+}
+
+function escQ(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function fmtD(ts){return ts?String(ts).slice(0,10):"";}
+
+function renderQnaAdmin(){
+  const waitN=QNA_ALL.filter(q=>!q.answer).length;
+  document.getElementById("qnaCount").textContent=waitN?`미답변 ${waitN}건`:"모두 답변 완료 🎉";
+  document.getElementById("qtabWait").textContent=`⏳ 미답변 ${waitN?`(${waitN})`:''}`;
+  const rows=QNA_ALL.filter(q=>qnaAdminTab==='wait'?!q.answer:!!q.answer);
+  const box=document.getElementById("qnaList");
+  if(!rows.length){
+    box.innerHTML=`<div class="empty">${qnaAdminTab==='wait'?'미답변 질문이 없어요 🎉':'아직 답변한 질문이 없어요'}</div>`;
+    return;
+  }
+  box.innerHTML=rows.map(q=>`
+    <div style="border:1.5px solid #e3edf3;border-radius:11px;padding:11px 12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--sky-deep);margin-bottom:5px">
+        <span>${escQ(q.student_name)}</span>
+        <span>· UNIT ${q.unit_no}${q.expr_title?' · '+escQ(q.expr_title):''}</span>
+        ${q.is_private?'<span>🔒비공개</span>':''}
+        ${q.is_best?'<span>⭐베스트</span>':''}
+        <span style="margin-left:auto;color:#7b93a4;font-weight:700">${fmtD(q.created_at)}</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px">Q. ${escQ(q.question)}</div>
+      <textarea id="ans-${q.id}" placeholder="답변을 입력하세요" style="width:100%;border:1.5px solid #cfe0ea;border-radius:9px;padding:9px 11px;font-size:13px;min-height:60px;resize:vertical;font-family:'Noto Sans KR'">${escQ(q.answer||'')}</textarea>
+      <div style="display:flex;gap:7px;margin-top:8px">
+        <button class="pbtn" style="flex:1;font-size:12.5px;padding:8px" onclick="saveAnswer(${q.id})">${q.answer?'✏️ 답변 수정':'✅ 답변 등록'}</button>
+        ${q.answer&&!q.is_private?`<button class="pbtn" style="flex:1;font-size:12.5px;padding:8px;background:${q.is_best?'#fff':'var(--sun)'};color:var(--ink);text-shadow:none" onclick="setBest(${q.id},${!q.is_best})">${q.is_best?'⭐ 베스트 해제':'⭐ 베스트 지정'}</button>`:''}
+      </div>
+    </div>`).join("");
+}
+
+async function saveAnswer(id){
+  const v=document.getElementById("ans-"+id).value.trim();
+  if(!v){toast("답변을 입력해 주세요");return;}
+  try{
+    await rpc("answer_qna",{p_qna_id:id,p_answer:v});
+    toast("답변이 저장됐어요");
+    await loadQnaAdmin();
+  }catch(e){toast("저장 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+async function setBest(id,best){
+  try{
+    await rpc("toggle_qna_best",{p_qna_id:id,p_best:best});
+    toast(best?"⭐ 베스트로 지정했어요 (학생 앱에 상단 노출)":"베스트를 해제했어요");
+    await loadQnaAdmin();
+  }catch(e){toast("변경 실패: 잠시 후 다시 시도해 주세요");}
 }
 
 async function loadStudents(){
