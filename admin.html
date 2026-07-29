@@ -689,16 +689,23 @@ async function openAssign(cohortId){
   const box=document.getElementById("cohortBody");
   box.innerHTML='<div class="empty">불러오는 중...</div>';
   try{
-    const rows=await rpc("get_unassigned_students",{})||[];
+    let rows;
+    try{
+      rows=await rpc("get_assignable_students",{p_cohort_id:cohortId})||[];
+    }catch(e){
+      /* 13단계D SQL 미실행 시 예전 방식으로 폴백 */
+      rows=(await rpc("get_unassigned_students",{})||[]).map(s=>({...s,other_challenges:null}));
+    }
     box.innerHTML=`
-      <div style="font-family:'Jua';font-size:13px;margin-bottom:9px">📥 미배정 학생 (${rows.length}명) — 배정 버튼을 눌러 추가하세요</div>
+      <div style="font-family:'Jua';font-size:13px;margin-bottom:4px">📥 이 챌린지에 배정 가능한 학생 (${rows.length}명)</div>
+      <div style="font-size:11px;color:#7b93a4;margin-bottom:9px">다른 챌린지 진행 중인 학생도 동시 배정할 수 있어요. 같은 챌린지에 이미 배정된 학생은 목록에 없어요.</div>
       ${rows.length?rows.map(s=>`
       <div class="co-row" id="assign-${s.id}">
         <span class="co-name">${dEsc(s.name)}</span>
-        <span class="co-sub">@${dEsc(s.login_id)}</span>
+        <span class="co-sub">@${dEsc(s.login_id)}${s.other_challenges?` · <span style="color:var(--sky-deep);font-weight:800">현재: ${dEsc(s.other_challenges)}</span>`:''}</span>
         <button class="co-btn add" onclick="assign(${cohortId},${s.id},'${dEsc(s.name)}')">배정</button>
       </div>`).join("")
-      :'<div class="empty">미배정 학생이 없어요. 새 계정을 먼저 만들어 주세요.</div>'}
+      :'<div class="empty">배정 가능한 학생이 없어요. 새 계정을 만들거나, 이미 전원 배정된 상태예요.</div>'}
       <button class="co-btn" style="width:100%;margin-top:12px;text-align:center" onclick="onCohortChange()">‹ 기수 목록으로</button>`;
   }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요</div>';}
 }
