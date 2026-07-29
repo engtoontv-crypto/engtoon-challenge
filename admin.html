@@ -48,6 +48,9 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
 .card.folded .card-h{border-bottom:none}
 .card.folded .card-b{display:none}
 .claim-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;background:#FFF3D6;color:#B8860B;border:1.5px solid var(--sun);border-radius:999px;padding:3px 10px}
+.qvis{display:inline-block;min-width:52px;text-align:center;font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px}
+.qvis.pub{background:#E4F8EF;color:var(--green)}
+.qvis.priv{background:#FFEDEA;color:var(--coral)}
 .claim-badge.mine{background:#E4F8EF;color:var(--green);border-color:var(--green)}
 .dash-row{display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #e3edf3;padding:9px 2px;font-size:12.5px}
 .dash-row:last-child{border-bottom:none}
@@ -389,7 +392,7 @@ function renderQnaAdmin(){
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--sky-deep);margin-bottom:5px">
         <span>${escQ(q.student_name)}</span>
         <span>· UNIT ${q.unit_no}${q.expr_title?' · '+escQ(q.expr_title):''}</span>
-        ${q.is_private?'<span>🔒비공개/숨김</span>':''}
+        <span class="qvis ${q.is_private?'priv':'pub'}">${q.is_private?'🔒 숨김':'🌐 공개'}</span>
         ${q.is_best?'<span>⭐베스트</span>':''}
         <span style="margin-left:auto;color:#7b93a4;font-weight:700">${fmtD(q.created_at)}</span>
       </div>
@@ -398,7 +401,7 @@ function renderQnaAdmin(){
       <textarea id="ans-${q.id}" placeholder="답변을 입력하세요" style="width:100%;border:1.5px solid #cfe0ea;border-radius:9px;padding:9px 11px;font-size:13px;min-height:60px;resize:vertical;font-family:'Noto Sans KR'">${escQ(q.answer||'')}</textarea>
       <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
         <button class="pbtn" style="flex:1;font-size:12.5px;padding:8px" onclick="saveAnswer(${q.id})">${q.answer?'✏️ 답변 수정':'✅ 답변 등록'}</button>
-        ${q.answer&&!q.is_private?`<button class="pbtn" style="flex:1;font-size:12.5px;padding:8px;background:${q.is_best?'#fff':'var(--sun)'};color:var(--ink);text-shadow:none" onclick="setBest(${q.id},${!q.is_best})">${q.is_best?'⭐ 베스트 해제':'⭐ 베스트 지정'}</button>`:''}
+        ${q.answer?`<button class="pbtn" style="flex:1;font-size:12.5px;padding:8px;background:${q.is_private?'#eef2f5':q.is_best?'#fff':'var(--sun)'};color:${q.is_private?'#a8b4bc':'var(--ink)'};text-shadow:none;cursor:${q.is_private?'not-allowed':'pointer'}" ${q.is_private?'disabled title="숨김 상태에서는 베스트로 지정할 수 없어요"':`onclick="setBest(${q.id},${!q.is_best})"`}>${q.is_private?'⭐ 베스트 (숨김중)':q.is_best?'⭐ 베스트 해제':'⭐ 베스트 지정'}</button>`:''}
       </div>
       ${modBtns?`<div style="display:flex;gap:7px;margin-top:7px">${modBtns}</div>`:''}
     </div>`;
