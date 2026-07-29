@@ -164,6 +164,15 @@ section[hidden]{display:none!important}
 .qz-wrongitem{border:2px solid var(--ink);border-radius:11px;background:#fff;box-shadow:var(--pop-sm);padding:11px 13px;margin-bottom:10px;font-size:12.5px;line-height:1.65;text-align:left}
 .qz-wrongitem .we{font-family:'Nunito';font-weight:800;font-size:14px;color:var(--sky-deep)}
 
+/* ---------- 챌린지 선택 ---------- */
+.ch-card{background:#fff;border:2.5px solid var(--ink);border-radius:var(--r);box-shadow:var(--pop);padding:16px;margin-bottom:14px;cursor:pointer}
+.ch-card.locked{background:#f0f4f6;border-color:#dbe4ea;box-shadow:none;cursor:default;opacity:.75}
+.ch-card .ch-name{font-family:'Jua';font-size:17px}
+.ch-card .ch-sub{font-size:11.5px;color:#7b93a4;margin-top:3px}
+.ch-card .ch-prog{display:flex;gap:8px;margin-top:10px}
+.ch-card .ch-prog span{font-size:11px;font-weight:800;color:var(--sky-deep);background:var(--sky-soft);border-radius:999px;padding:3px 10px}
+.ch-card .ch-lock{font-size:12px;font-weight:700;color:#a8b4bc;margin-top:8px}
+
 /* ---------- 주차 현황 ---------- */
 .wk-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .wk-nav button{font-family:'Jua';font-size:16px;background:#fff;border:2px solid var(--ink);border-radius:10px;width:38px;height:38px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
@@ -215,11 +224,23 @@ section[hidden]{display:none!important}
     </div>
   </section>
 
+  <!-- 챌린지 선택 -->
+  <section id="scr-challenges" hidden>
+    <div class="topbar">
+      <div class="row">
+        <div class="brand">🧭 챌린지 선택</div>
+        <button class="logoutbtn" onclick="doLogout()">로그아웃</button>
+      </div>
+    </div>
+    <div class="stage" id="challengesStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <!-- 홈 -->
   <section id="scr-home" hidden>
     <div class="topbar">
       <div class="row">
         <div class="brand">잉툰 챌린지</div>
+        <button class="backbtn" onclick="openChallengePicker()" style="margin-right:6px">🧭 챌린지</button>
         <button class="backbtn" onclick="openSettings()" style="margin-right:6px">⚙️ 설정</button>
         <button class="logoutbtn" onclick="doLogout()">로그아웃</button>
       </div>
@@ -369,7 +390,7 @@ section[hidden]{display:none!important}
 <script>
 const SUPA_URL="https://axwkoviaxacxkbxtouwh.supabase.co";
 const SUPA_KEY="sb_publishable_lQCcI5UMHOlVfL8yunPc9Q_lJZSiBhY";
-const CHALLENGE_ID=1;
+let CHALLENGE_ID=null; /* 학생이 챌린지 선택 화면에서 고른 값. 고정 아님! */
 const SKEY="engtoon_challenge_student";
 
 async function rpc(name, params){
@@ -395,7 +416,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks",cert:"scr-cert"};
+const SCR={login:"scr-login",challenges:"scr-challenges",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks",cert:"scr-cert"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -418,7 +439,7 @@ async function doLogin(){
       ME=rows[0];
       ME.login_id=id;
       localStorage.setItem(SKEY,JSON.stringify(ME));
-      await enterHome();
+      await openChallengePicker();
     }
   }catch(e){
     err.textContent="서버 연결에 실패했어요. 잠시 후 다시 시도해 주세요";err.classList.add("show");
@@ -426,7 +447,7 @@ async function doLogin(){
   btn.disabled=false;btn.textContent="시작하기 ▶";
 }
 function doLogout(){
-  localStorage.removeItem(SKEY);ME=null;UNITS=[];
+  localStorage.removeItem(SKEY);localStorage.removeItem(SKEY+"_ch");ME=null;UNITS=[];CHALLENGE_ID=null;
   show("login");
   document.getElementById("lg-id").value="";document.getElementById("lg-pw").value="";
 }
@@ -1177,6 +1198,41 @@ function saveCert(){
   }catch(e){toastRoot("이미지를 길게 눌러 저장해 주세요");}
 }
 
+/* ================= 챌린지 선택 ================= */
+async function openChallengePicker(){
+  show("challenges");
+  const stage=document.getElementById("challengesStage");
+  stage.innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_my_challenges",{p_student_id:ME.id})||[];
+    if(!rows.length){stage.innerHTML='<div class="loading">아직 등록된 챌린지가 없어요</div>';return;}
+    stage.innerHTML=rows.map(r=>{
+      if(r.enrolled){
+        return `<div class="ch-card" onclick="pickChallenge(${r.challenge_id})">
+          <div class="ch-name">🧩 ${escapeHtml(r.challenge_name)}</div>
+          <div class="ch-sub">${r.cohort_name?escapeHtml(r.cohort_name)+' · ':''}전체 ${r.units_total}유닛</div>
+          <div class="ch-prog">
+            <span>📗 ${r.units_done}/${r.units_total} 유닛</span>
+            <span>📖 표현 ${r.exprs_done}개</span>
+          </div>
+        </div>`;
+      }
+      return `<div class="ch-card locked">
+        <div class="ch-name" style="color:#a8b4bc">🔒 ${escapeHtml(r.challenge_name)}</div>
+        <div class="ch-lock">아직 배정되지 않았어요. 선생님께 문의해 주세요!</div>
+      </div>`;
+    }).join("");
+  }catch(e){
+    stage.innerHTML='<div class="loading">불러오지 못했어요 (13단계 SQL이 실행됐는지 확인해 주세요)</div>';
+  }
+}
+
+async function pickChallenge(chId){
+  CHALLENGE_ID=chId;
+  localStorage.setItem(SKEY+"_ch",String(chId));
+  await enterHome();
+}
+
 /* ================= 설정 ================= */
 function openSettings(){
   show("settings");
@@ -1317,7 +1373,8 @@ async function renderQna(){
 
 /* ================= 메달 ================= */
 /* 정의는 앱에, 획득 기록은 DB에. 판정은 서버(check_and_award_medals)가 실데이터로 수행 */
-const MEDAL_DEFS=[
+/* 100일 챌린지 (75유닛/375표현) 메달 기준 */
+const MEDAL_DEFS_1=[
  {cat:"🗺️ 여정", items:[1,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75].map(n=>({key:"unit-"+n,icon:"🏅",name:"UNIT "+n+" 완료"}))},
  {cat:"📖 표현 수집", items:[10,25,50,75,100,150,200,250,300,350,375].map(n=>({key:"expr-"+n,icon:n>=375?"👑":n>=200?"💎":n>=100?"📚":"📖",name:"표현 "+n+"개"}))},
  {cat:"🔊 낭독왕", items:[100,300,500,1000,2000,3000,3750].map(n=>({key:"speak-"+n,icon:n>=3000?"🎤":n>=1000?"📢":"🔊",name:"낭독 "+n+"회"}))},
@@ -1326,8 +1383,19 @@ const MEDAL_DEFS=[
  {cat:"🧩 복습 퀴즈", items:[1,5,10,20,30,50].map(n=>({key:"quiz-"+n,icon:n>=30?"🎖️":"🧩",name:"퀴즈 "+n+"회"}))},
  {cat:"💯 퍼펙트", items:[1,5,10].map(n=>({key:"qperfect-"+n,icon:"💯",name:"만점 "+n+"회"}))}
 ];
+/* 구동사 챌린지 (50유닛/200표현) 메달 기준 — 13단계 SQL 기준치와 동일하게 맞춤 */
+const MEDAL_DEFS_2=[
+ {cat:"🗺️ 여정", items:[1,5,10,15,20,25,30,35,40,45,50].map(n=>({key:"unit-"+n,icon:"🏅",name:"UNIT "+n+" 완료"}))},
+ {cat:"📖 표현 수집", items:[10,25,50,75,100,125,150,175,200].map(n=>({key:"expr-"+n,icon:n>=200?"👑":n>=100?"💎":n>=50?"📚":"📖",name:"표현 "+n+"개"}))},
+ {cat:"🔊 낭독왕", items:[100,300,500,1000,1500,2000].map(n=>({key:"speak-"+n,icon:n>=1500?"🎤":n>=500?"📢":"🔊",name:"낭독 "+n+"회"}))},
+ {cat:"✍️ 필사왕", items:[30,100,300,450,600].map(n=>({key:"copy-"+n,icon:n>=450?"🖋️":"✍️",name:"따라쓰기 "+n+"회"}))},
+ {cat:"📝 작문왕", items:[20,50,100,200,300,400].map(n=>({key:"write-"+n,icon:n>=300?"🏅":"📝",name:"작문 "+n+"문장"}))},
+ {cat:"🧩 복습 퀴즈", items:[1,5,10,20,30,50].map(n=>({key:"quiz-"+n,icon:n>=30?"🎖️":"🧩",name:"퀴즈 "+n+"회"}))},
+ {cat:"💯 퍼펙트", items:[1,5,10].map(n=>({key:"qperfect-"+n,icon:"💯",name:"만점 "+n+"회"}))}
+];
+function getMedalDefs(){return CHALLENGE_ID===2?MEDAL_DEFS_2:MEDAL_DEFS_1;}
 const MEDAL_NAME={};
-MEDAL_DEFS.forEach(c=>c.items.forEach(m=>MEDAL_NAME[m.key]=m.name));
+[...MEDAL_DEFS_1,...MEDAL_DEFS_2].forEach(c=>c.items.forEach(m=>MEDAL_NAME[m.key]=m.name));
 let MY_MEDALS=new Set();
 let NEW_MEDALS=new Set();
 
@@ -1352,6 +1420,7 @@ async function openMedals(){
     const rows=await rpc("get_my_medals",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
     MY_MEDALS=new Set(rows.map(r=>r.medal_key));
   }catch(e){}
+  const MEDAL_DEFS=getMedalDefs();
   const total=MEDAL_DEFS.reduce((a,c)=>a+c.items.length,0);
   const got=MEDAL_DEFS.reduce((a,c)=>a+c.items.filter(m=>MY_MEDALS.has(m.key)).length,0);
   const cats=MEDAL_DEFS.map(c=>{
@@ -1395,7 +1464,12 @@ function closeVeil(){
 (function(){
   const saved=localStorage.getItem(SKEY);
   if(saved){
-    try{ME=JSON.parse(saved);enterHome();}
+    try{
+      ME=JSON.parse(saved);
+      const savedCh=localStorage.getItem(SKEY+"_ch");
+      if(savedCh){CHALLENGE_ID=parseInt(savedCh);enterHome();}
+      else{openChallengePicker();}
+    }
     catch(e){localStorage.removeItem(SKEY);}
   }
 })();
