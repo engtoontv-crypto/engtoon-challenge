@@ -77,6 +77,7 @@ section[hidden]{display:none!important}
 .ucell.next{background:var(--sky);color:#fff;text-shadow:1px 1px 0 var(--ink);animation:pulse 1.6s infinite}
 @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 .ucell.locked{background:#f0f4f6;color:#c2ced6;box-shadow:none;border-color:#dbe4ea;cursor:default}
+.ucell.open{background:#fff;border:2px dashed var(--sky-deep);color:var(--sky-deep)}
 .ulegend{font-size:11px;color:#7b93a4;margin-top:12px;line-height:1.7}
 
 /* ---------- 학습 화면 ---------- */
@@ -162,6 +163,27 @@ section[hidden]{display:none!important}
 .qz-result p{font-size:12.5px;color:#5a7285;line-height:1.7;margin:6px 0 14px}
 .qz-wrongitem{border:2px solid var(--ink);border-radius:11px;background:#fff;box-shadow:var(--pop-sm);padding:11px 13px;margin-bottom:10px;font-size:12.5px;line-height:1.65;text-align:left}
 .qz-wrongitem .we{font-family:'Nunito';font-weight:800;font-size:14px;color:var(--sky-deep)}
+
+/* ---------- 주차 현황 ---------- */
+.wk-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.wk-nav button{font-family:'Jua';font-size:16px;background:#fff;border:2px solid var(--ink);border-radius:10px;width:38px;height:38px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
+.wk-nav button:disabled{opacity:.35;cursor:default}
+.wk-title{flex:1;text-align:center;font-family:'Jua';font-size:15px}
+.wk-mytiles{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:6px}
+.wk-mc{aspect-ratio:1;border:2px solid var(--ink);border-radius:10px;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Nunito';font-weight:800;font-size:12.5px}
+.wk-mc span{font-size:8.5px;font-family:'Jua';font-weight:400;margin-top:1px}
+.wk-mc.done{background:var(--green);color:#fff;text-shadow:1px 1px 0 var(--ink)}
+.wk-mc.part{background:var(--sun)}
+.wk-mc.locked{background:#f0f4f6;color:#c2ced6;border-color:#dbe4ea}
+.wk-mc.open{background:#fff;border:2px dashed var(--sky-deep);color:var(--sky-deep)}
+.wk-roster-row{display:flex;align-items:center;gap:6px;padding:8px 4px;border-bottom:1.5px solid #eef2f5}
+.wk-roster-row.me{background:var(--sky-soft);border-radius:9px}
+.wk-rname{width:64px;font-family:'Jua';font-size:11px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-rchips{display:flex;gap:4px;flex:1}
+.wk-chip{flex:1;aspect-ratio:1;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;font-family:'Nunito'}
+.wk-chip.d{background:var(--green);color:#fff}
+.wk-chip.p{background:var(--sun);color:var(--ink)}
+.wk-chip.z{background:#eef2f5;color:#c2ced6}
 
 /* ---------- 유닛 완료 오버레이 ---------- */
 .veil{position:fixed;inset:0;background:rgba(30,58,79,.72);z-index:60;display:none;align-items:center;justify-content:center;padding:28px}
@@ -295,6 +317,18 @@ section[hidden]{display:none!important}
     </div>
   </section>
 
+  <!-- 주차 현황 -->
+  <section id="scr-weeks" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="enterHome()">‹ 홈</button>
+        <div class="brand">📆 주차 현황</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage" id="weeksStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <div class="veil" id="qnaVeil">
     <div class="vmodal" style="text-align:left">
       <div style="font-family:'Jua';font-size:16px;margin-bottom:4px">💬 잉툰쌤에게 질문하기</div>
@@ -340,13 +374,14 @@ async function rpc(name, params){
 let ME=null;        /* {id, name, nickname, expires_at} */
 let UNITS=[];       /* [{unit_no,total,done}] */
 let EXPIRED=false;
+let UNLOCK_OVERRIDE=null; /* 기수별 오픈 값 (예: 65 = 65번까지 순서상관없이 열림), null이면 순차잠금 그대로 */
 
 function toastRoot(msg){
   const t=document.getElementById("toastRoot");
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings"};
+const SCR={login:"scr-login",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -395,6 +430,7 @@ function unitState(u){
   const nxt=nextUnitNo();
   if(u.done>=u.total) return "done";
   if(u.unit_no===nxt) return u.done>0?"part":"next";
+  if(UNLOCK_OVERRIDE&&u.unit_no<=UNLOCK_OVERRIDE) return "open";
   return "locked";
 }
 async function enterHome(){
@@ -402,6 +438,7 @@ async function enterHome(){
   document.getElementById("homeStage").innerHTML='<div class="loading">불러오는 중...</div>';
   try{
     UNITS=await rpc("get_my_units",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+    try{UNLOCK_OVERRIDE=await rpc("get_student_unlock",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID});}catch(e){UNLOCK_OVERRIDE=null;}
   }catch(e){
     document.getElementById("homeStage").innerHTML='<div class="loading">데이터를 불러오지 못했어요.<br>새로고침 해주세요.</div>';return;
   }
@@ -440,10 +477,11 @@ async function enterHome(){
       <button class="mini" style="flex:1;text-align:center" onclick="openUnits()">📚 유닛 목록</button>
       <button class="mini" style="flex:1;text-align:center" onclick="openMedals()">🏅 내 메달</button>
     </div>
-    <div style="display:flex;gap:9px">
+    <div style="display:flex;gap:9px;margin-bottom:9px">
       <button class="mini y" style="flex:1;text-align:center" onclick="openQuizIntro()">🧩 복습 퀴즈</button>
       <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A</button>
-    </div>`;
+    </div>
+    <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>`;
 }
 
 /* ================= 유닛 목록 ================= */
@@ -452,12 +490,12 @@ function openUnits(){
   const cells=UNITS.map(u=>{
     const st=unitState(u);
     const clickable=st!=="locked"&&!(EXPIRED&&st!=="done");
-    const label=st==="done"?"완료":st==="part"?`${u.done}/${u.total}`:st==="next"?"오늘":"🔒";
+    const label=st==="done"?"완료":st==="part"?`${u.done}/${u.total}`:st==="next"?"오늘":st==="open"?"🔓":"🔒";
     return `<div class="ucell ${st}" ${clickable?`onclick="openStudy(${u.unit_no})"`:''}>${u.unit_no}<span>${label}</span></div>`;
   }).join("");
   document.getElementById("unitsStage").innerHTML=`
     <div class="ugrid">${cells}</div>
-    <div class="ulegend">🟦 오늘 학습 · 🟨 진행 중 · 🟩 완료 · 🔒 이전 유닛을 끝내면 열려요<br>완료한 유닛은 언제든 다시 볼 수 있어요.</div>`;
+    <div class="ulegend">🟦 오늘 학습 · 🟨 진행 중 · 🟩 완료 · 🔒 이전 유닛을 끝내면 열려요${UNLOCK_OVERRIDE?' · 🔓 우리 반은 미리 열려 있어요':''}<br>완료한 유닛은 언제든 다시 볼 수 있어요.</div>`;
 }
 
 /* ================= 학습 ================= */
@@ -871,6 +909,102 @@ function finishQuiz(){
       </div>
       ${wrongHtml}
     </div></div>`;
+}
+
+/* ================= 주차 현황 ================= */
+const WEEK_SIZE=5; /* 두 챌린지 모두 주당 5유닛 (75/15주, 50/10주) */
+let wkTab='mine';
+let wkNo=1;
+let MY_COHORT=null; /* {cohort_id, cohort_name} | null */
+
+function totalWeeks(){return Math.max(1,Math.ceil(UNITS.length/WEEK_SIZE));}
+
+function openWeeks(){
+  /* 진행 중인(또는 마지막) 유닛이 속한 주차로 시작 */
+  const nxt=nextUnitNo()||UNITS.length||1;
+  wkNo=Math.max(1,Math.min(totalWeeks(),Math.ceil(nxt/WEEK_SIZE)));
+  wkTab='mine';
+  show("weeks");
+  renderWeeks();
+}
+
+function setWkTab(t){wkTab=t;renderWeeks();}
+function wkPrev(){if(wkNo>1){wkNo--;renderWeeks();}}
+function wkNext(){if(wkNo<totalWeeks()){wkNo++;renderWeeks();}}
+
+function weekRange(){
+  const start=(wkNo-1)*WEEK_SIZE+1;
+  const end=Math.min(UNITS.length,wkNo*WEEK_SIZE);
+  return [start,end];
+}
+
+async function renderWeeks(){
+  const stage=document.getElementById("weeksStage");
+  const [start,end]=weekRange();
+  const nav=`
+    <div class="wk-nav">
+      <button onclick="wkPrev()" ${wkNo<=1?'disabled':''}>‹</button>
+      <div class="wk-title">${wkNo}주차 <span style="font-weight:400;font-size:11px;color:#7b93a4">(UNIT ${start}~${end})</span></div>
+      <button onclick="wkNext()" ${wkNo>=totalWeeks()?'disabled':''}>›</button>
+    </div>`;
+  const tabs=`
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="mini ${wkTab==='mine'?'y':''}" style="flex:1;text-align:center" onclick="setWkTab('mine')">🙋 나의 진행</button>
+      <button class="mini ${wkTab==='class'?'y':''}" style="flex:1;text-align:center" onclick="setWkTab('class')">👥 반 전체 보기</button>
+    </div>`;
+  stage.innerHTML=nav+tabs+'<div class="loading">불러오는 중...</div>';
+
+  if(wkTab==='mine'){
+    const tiles=[];
+    for(let n=start;n<=end;n++){
+      const u=UNITS.find(x=>x.unit_no===n);
+      if(!u){tiles.push(`<div class="wk-mc locked">${n}<span>-</span></div>`);continue;}
+      const st=unitState(u);
+      const label=st==="done"?"완료":st==="part"?`${u.done}/${u.total}`:st==="next"?"오늘":st==="open"?"🔓":"🔒";
+      tiles.push(`<div class="wk-mc ${st}" onclick="${st!=='locked'?`openStudy(${n})`:''}" style="cursor:${st!=='locked'?'pointer':'default'}">${n}<span>${label}</span></div>`);
+    }
+    stage.innerHTML=nav+tabs+`<div class="wk-mytiles">${tiles.join("")}</div>
+      <div class="ulegend">🟦 오늘 학습 · 🟨 진행 중 · 🟩 완료 · 🔒 잠김${UNLOCK_OVERRIDE?' · 🔓 미리 열림':''}</div>`;
+    return;
+  }
+
+  /* 반 전체 보기 */
+  try{
+    if(!MY_COHORT){
+      const rows=await rpc("get_my_cohort",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+      MY_COHORT=rows.length?rows[0]:false;
+    }
+    if(!MY_COHORT){
+      stage.innerHTML=nav+tabs+'<div class="loading">아직 배정된 반이 없어요.<br>선생님께 문의해 주세요!</div>';
+      return;
+    }
+    const prog=await rpc("get_cohort_week_progress",{p_cohort_id:MY_COHORT.cohort_id,p_unit_start:start,p_unit_end:end})||[];
+    const byStudent={};
+    prog.forEach(r=>{
+      (byStudent[r.student_id]=byStudent[r.student_id]||{name:r.display_name,units:{}}).units[r.unit_no]={done:r.done,total:r.total};
+    });
+    const unitNums=[];for(let n=start;n<=end;n++)unitNums.push(n);
+    const rows=Object.entries(byStudent).map(([sid,s])=>{
+      const chips=unitNums.map(n=>{
+        const d=s.units[n];
+        if(!d||d.total===0)return `<div class="wk-chip z">${n}</div>`;
+        if(d.done>=d.total)return `<div class="wk-chip d">${n}</div>`;
+        if(d.done>0)return `<div class="wk-chip p">${n}</div>`;
+        return `<div class="wk-chip z">${n}</div>`;
+      }).join("");
+      const isMe=String(sid)===String(ME.id);
+      return `<div class="wk-roster-row ${isMe?'me':''}">
+        <span class="wk-rname">${escapeHtml(s.name)}${isMe?' (나)':''}</span>
+        <div class="wk-rchips">${chips}</div>
+      </div>`;
+    }).join("");
+    stage.innerHTML=nav+tabs+`
+      <div style="font-size:11px;font-weight:800;color:#7b93a4;margin-bottom:9px">${escapeHtml(MY_COHORT.cohort_name)} · ${Object.keys(byStudent).length}명</div>
+      ${rows||'<div class="loading">우리 반 학생이 없어요</div>'}
+      <div class="ulegend">🟩 완료 · 🟨 진행 중 · ⬜ 시작 전</div>`;
+  }catch(e){
+    stage.innerHTML=nav+tabs+'<div class="loading">불러오지 못했어요 (8단계 SQL이 실행됐는지 확인해 주세요)</div>';
+  }
 }
 
 /* ================= 설정 ================= */
