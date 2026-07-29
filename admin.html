@@ -42,7 +42,26 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
 .logoutbtn{background:rgba(255,255,255,.92);border:none;border-radius:9px;font-size:11px;font-weight:800;padding:5px 10px;cursor:pointer;color:var(--ink)}
 .stage{padding:16px}
 .card{background:var(--card);border:var(--line);border-radius:var(--r);box-shadow:var(--pop);margin-bottom:16px;overflow:hidden}
-.card-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:var(--line);background:var(--sky-soft)}
+.card-h{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:var(--line);background:var(--sky-soft);cursor:pointer;user-select:none}
+.card-h .arrow{margin-left:2px;font-size:11px;transition:transform .2s}
+.card.folded .card-h .arrow{transform:rotate(-90deg)}
+.card.folded .card-h{border-bottom:none}
+.card.folded .card-b{display:none}
+.claim-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;background:#FFF3D6;color:#B8860B;border:1.5px solid var(--sun);border-radius:999px;padding:3px 10px}
+.claim-badge.mine{background:#E4F8EF;color:var(--green);border-color:var(--green)}
+.dash-row{display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #e3edf3;padding:9px 2px;font-size:12.5px}
+.dash-row:last-child{border-bottom:none}
+.dash-rank{width:26px;font-family:'Jua';font-size:13px;text-align:center;color:#7b93a4}
+.dash-name{flex:1;font-family:'Jua';font-size:13px}
+.dash-stat{font-size:11px;font-weight:800;color:var(--sky-deep);background:var(--sky-soft);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.dash-last{font-size:10px;color:#7b93a4;white-space:nowrap}
+.co-row{display:flex;align-items:center;gap:8px;border-bottom:1.5px solid #e3edf3;padding:9px 2px;font-size:13px}
+.co-row:last-child{border-bottom:none}
+.co-name{font-family:'Jua';font-size:13px;min-width:56px}
+.co-sub{color:#7b93a4;font-size:11.5px;flex:1}
+.co-btn{font-family:'Jua';font-size:11px;border:1.5px solid var(--ink);border-radius:8px;background:#fff;padding:5px 10px;cursor:pointer;color:var(--ink)}
+.co-btn.add{background:var(--sky);color:#fff;border-color:var(--ink)}
+.co-btn.del{color:var(--coral);border-color:var(--coral)}
 .step-no{font-family:'Jua';font-size:12px;background:var(--ink);color:#fff;border-radius:8px;padding:2px 8px}
 .card-h b{font-family:'Jua';font-size:15px;font-weight:400}
 .card-h .hint{margin-left:auto;font-size:11px;color:#5a7285}
@@ -97,8 +116,8 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
     </div>
     <div class="stage">
 
-      <div class="card">
-        <div class="card-h"><span class="step-no">Q&amp;A</span><b>질문 관리</b><span class="hint" id="qnaCount"></span></div>
+      <div class="card" id="card-qna">
+        <div class="card-h" onclick="toggleCard('card-qna')"><span class="step-no">Q&amp;A</span><b>질문 관리</b><span class="hint" id="qnaCount"></span><span class="arrow">▼</span></div>
         <div class="card-b">
           <div class="roletabs">
             <button class="roletab on" id="qtabWait" onclick="setQnaAdminTab('wait')">⏳ 미답변</button>
@@ -108,8 +127,38 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-h"><span class="step-no">NEW</span><b>새 계정 만들기</b><span class="hint" id="acctHint"></span></div>
+      <div class="card folded" id="card-cohort">
+        <div class="card-h" onclick="toggleCard('card-cohort')"><span class="step-no">기수</span><b>기수 관리 · 학생 배정</b><span class="hint" id="cohortHint"></span><span class="arrow">▼</span></div>
+        <div class="card-b">
+          <div id="cohortNewForm" style="display:none;margin-bottom:14px">
+            <div class="form">
+              <input id="co-name" placeholder="기수 이름 (예: 7기)">
+              <select id="co-ch">
+                <option value="1">100일 영어 습관 챌린지</option>
+                <option value="2">구동사 200 챌린지</option>
+              </select>
+              <div class="row2"><label>시작일</label><input id="co-start" type="date"></div>
+              <button class="pbtn" onclick="createCohort()">➕ 기수 만들기</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <select id="cohortSel" onchange="onCohortChange()" style="flex:1;border:1.5px solid #cfe0ea;border-radius:10px;padding:9px 11px;font-size:13.5px;background:#fff;font-family:'Noto Sans KR'"></select>
+            <button class="co-btn" id="btnNewCohort" onclick="toggleNewCohortForm()" style="display:none">➕ 새 기수</button>
+          </div>
+          <div id="cohortBody"><div class="empty">기수를 선택해 주세요</div></div>
+        </div>
+      </div>
+
+      <div class="card folded" id="card-dash">
+        <div class="card-h" onclick="toggleCard('card-dash')"><span class="step-no">현황</span><b>기수 현황판 · 랭킹</b><span class="hint">완료 유닛 기준</span><span class="arrow">▼</span></div>
+        <div class="card-b">
+          <select id="dashSel" onchange="loadDashboard()" style="width:100%;border:1.5px solid #cfe0ea;border-radius:10px;padding:9px 11px;font-size:13.5px;background:#fff;font-family:'Noto Sans KR';margin-bottom:12px"></select>
+          <div id="dashBody"><div class="empty">기수를 선택해 주세요</div></div>
+        </div>
+      </div>
+
+      <div class="card folded" id="card-acct">
+        <div class="card-h" onclick="toggleCard('card-acct')"><span class="step-no">NEW</span><b>새 계정 만들기</b><span class="hint" id="acctHint"></span><span class="arrow">▼</span></div>
         <div class="card-b">
           <div class="roletabs" id="roleTabs" style="display:none">
             <button class="roletab on" id="tabStudent" onclick="setAcctRole('student')">👤 학생 계정</button>
@@ -140,11 +189,6 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
             <button class="pbtn" id="na2-btn" onclick="createAdminAcct()">➕ 관리자 계정 생성</button>
           </div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-h"><span class="step-no">LIST</span><b>학생 목록</b><span class="hint" id="stuCount"></span></div>
-        <div class="card-b" id="stuList"><div class="empty">불러오는 중...</div></div>
       </div>
 
     </div>
@@ -192,8 +236,14 @@ function showMain(){
   document.getElementById("roleTabs").style.display=isSuper?"flex":"none";
   document.getElementById("acctHint").textContent=isSuper?"학생·관리자 모두 생성 가능":"학생 계정만 생성 가능";
   document.getElementById("na-exp").value=defaultExpiry();
-  loadStudents();
+  document.getElementById("btnNewCohort").style.display=isSuper?"inline-block":"none";
+  document.getElementById("co-start").value=new Date().toISOString().slice(0,10);
+  loadCohorts();
   loadQnaAdmin();
+}
+
+function toggleCard(id){
+  document.getElementById(id).classList.toggle("folded");
 }
 
 async function doLogin(){
@@ -252,7 +302,7 @@ async function createStudent(){
     document.getElementById("na-name").value="";
     document.getElementById("na-id").value="";
     document.getElementById("na-pw").value="";
-    loadStudents();
+    loadCohorts(true);
   }catch(e){
     toast(e.message.includes("duplicate")?"이미 사용 중인 아이디예요":"생성 실패: 잠시 후 다시 시도해 주세요");
   }
@@ -311,7 +361,25 @@ function renderQnaAdmin(){
     box.innerHTML=`<div class="empty">${qnaAdminTab==='wait'?'미답변 질문이 없어요 🎉':'아직 답변한 질문이 없어요'}</div>`;
     return;
   }
-  box.innerHTML=rows.map(q=>`
+  box.innerHTML=rows.map(q=>{
+    /* 답변중 잠금 표시 (미답변만) */
+    let claimHtml='';
+    if(!q.answer){
+      if(q.claimed_by&&q.claimed_by!==me.name){
+        claimHtml=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+          <span class="claim-badge">✍️ ${escQ(q.claimed_by)} 선생님이 답변 작성 중</span>
+          <button class="co-btn" style="font-size:10px;padding:3px 8px" onclick="releaseClaim(${q.id})">잠금 해제</button>
+        </div>`;
+      }else if(q.claimed_by===me.name){
+        claimHtml=`<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
+          <span class="claim-badge mine">✍️ 내가 답변 작성 중</span>
+          <button class="co-btn" style="font-size:10px;padding:3px 8px" onclick="releaseClaim(${q.id})">작성 취소</button>
+        </div>`;
+      }else{
+        claimHtml=`<button class="co-btn" style="margin-bottom:8px" onclick="claimQna(${q.id})">✍️ 답변 시작 — 다른 선생님에게 "작성 중" 표시</button>`;
+      }
+    }
+    return `
     <div style="border:1.5px solid #e3edf3;border-radius:11px;padding:11px 12px;margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--sky-deep);margin-bottom:5px">
         <span>${escQ(q.student_name)}</span>
@@ -321,12 +389,34 @@ function renderQnaAdmin(){
         <span style="margin-left:auto;color:#7b93a4;font-weight:700">${fmtD(q.created_at)}</span>
       </div>
       <div style="font-size:13px;font-weight:700;margin-bottom:8px">Q. ${escQ(q.question)}</div>
+      ${claimHtml}
       <textarea id="ans-${q.id}" placeholder="답변을 입력하세요" style="width:100%;border:1.5px solid #cfe0ea;border-radius:9px;padding:9px 11px;font-size:13px;min-height:60px;resize:vertical;font-family:'Noto Sans KR'">${escQ(q.answer||'')}</textarea>
       <div style="display:flex;gap:7px;margin-top:8px">
         <button class="pbtn" style="flex:1;font-size:12.5px;padding:8px" onclick="saveAnswer(${q.id})">${q.answer?'✏️ 답변 수정':'✅ 답변 등록'}</button>
         ${q.answer&&!q.is_private?`<button class="pbtn" style="flex:1;font-size:12.5px;padding:8px;background:${q.is_best?'#fff':'var(--sun)'};color:var(--ink);text-shadow:none" onclick="setBest(${q.id},${!q.is_best})">${q.is_best?'⭐ 베스트 해제':'⭐ 베스트 지정'}</button>`:''}
       </div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
+}
+
+async function claimQna(id){
+  try{
+    const who=await rpc("claim_qna",{p_qna_id:id,p_admin_name:me.name});
+    if(who&&who!==me.name){
+      toast(`앗, ${who} 선생님이 먼저 작성을 시작했어요`);
+    }else{
+      toast('"작성 중"으로 표시했어요. 다른 선생님 화면에도 보여요');
+    }
+    await loadQnaAdmin();
+  }catch(e){toast("표시 실패: 7단계B SQL이 실행됐는지 확인해 주세요");}
+}
+
+async function releaseClaim(id){
+  try{
+    await rpc("release_qna",{p_qna_id:id});
+    toast("잠금을 해제했어요");
+    await loadQnaAdmin();
+  }catch(e){toast("해제 실패: 잠시 후 다시 시도해 주세요");}
 }
 
 async function saveAnswer(id){
@@ -347,25 +437,148 @@ async function setBest(id,best){
   }catch(e){toast("변경 실패: 잠시 후 다시 시도해 주세요");}
 }
 
-async function loadStudents(){
-  const box=document.getElementById("stuList");
+/* ================= 기수 관리 ================= */
+let COHORTS=[];
+let assignMode=false; /* 미배정 학생 배정 화면 여부 */
+
+function dEsc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function dday(exp){
+  const t=new Date();t.setHours(0,0,0,0);
+  const d=Math.round((new Date(exp+"T00:00:00")-t)/86400000);
+  return d<0?"만료":"D-"+d;
+}
+
+async function loadCohorts(keepSel){
+  try{COHORTS=await rpc("list_cohorts",{})||[];}catch(e){COHORTS=[];}
+  const sel=document.getElementById("cohortSel");
+  const prev=keepSel?sel.value:null;
+  const opts=['<option value="">— 기수 선택 —</option>']
+    .concat(COHORTS.map(c=>`<option value="${c.id}">${dEsc(c.name)} · ${dEsc(c.challenge_name)} (${c.student_count}명)</option>`))
+    .concat(['<option value="un">📥 미배정 학생 보기</option>']);
+  sel.innerHTML=opts.join("");
+  if(prev)sel.value=prev;
+  document.getElementById("cohortHint").textContent=COHORTS.length+"개 기수";
+  /* 현황판 select도 동기화 */
+  const ds=document.getElementById("dashSel");
+  const dprev=keepSel?ds.value:null;
+  ds.innerHTML=['<option value="">— 기수 선택 —</option>']
+    .concat(COHORTS.map(c=>`<option value="${c.id}">${dEsc(c.name)} · ${dEsc(c.challenge_name)}</option>`)).join("");
+  if(dprev)ds.value=dprev;
+  if(!assignMode)onCohortChange(); /* 배정 화면 중에는 목록으로 튕기지 않게 */
+}
+
+function toggleNewCohortForm(){
+  const f=document.getElementById("cohortNewForm");
+  f.style.display=f.style.display==="none"?"block":"none";
+}
+
+async function createCohort(){
+  if(!me||me.role!=="super"){toast("최고관리자만 가능해요");return;}
+  const name=document.getElementById("co-name").value.trim();
+  const ch=parseInt(document.getElementById("co-ch").value);
+  const start=document.getElementById("co-start").value;
+  if(!name||!start){toast("기수 이름과 시작일을 입력해 주세요");return;}
   try{
-    const rows=await rpc("list_students",{});
-    document.getElementById("stuCount").textContent=(rows?rows.length:0)+"명";
-    if(!rows||!rows.length){box.innerHTML='<div class="empty">아직 학생이 없어요. 위에서 첫 계정을 만들어 보세요!</div>';return;}
-    const today=new Date(); today.setHours(0,0,0,0);
-    box.innerHTML=rows.map(s=>{
-      const dl=Math.round((new Date(s.expires_at+"T00:00:00")-today)/86400000);
-      const warn=dl<=14;
-      return `<div class="srow">
-        <span class="sname">${s.name}</span>
-        <span class="sid">@${s.login_id}${s.nickname&&s.nickname!==s.name?" · 닉네임 "+s.nickname:""}</span>
-        <span class="sexp ${warn?"warn":""}">${dl<0?"만료":"D-"+dl}</span>
-      </div>`;
-    }).join("");
+    await rpc("create_cohort",{p_challenge_id:ch,p_name:name,p_start:start});
+    toast(`${name} 기수를 만들었어요`);
+    document.getElementById("co-name").value="";
+    toggleNewCohortForm();
+    await loadCohorts();
+  }catch(e){toast("생성 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+async function onCohortChange(){
+  assignMode=false;
+  const v=document.getElementById("cohortSel").value;
+  const box=document.getElementById("cohortBody");
+  if(!v){box.innerHTML='<div class="empty">기수를 선택해 주세요</div>';return;}
+  box.innerHTML='<div class="empty">불러오는 중...</div>';
+  const isSuper=me&&me.role==="super";
+  try{
+    if(v==="un"){
+      const rows=await rpc("get_unassigned_students",{})||[];
+      box.innerHTML=(rows.length?rows.map(s=>`
+        <div class="co-row">
+          <span class="co-name">${dEsc(s.name)}</span>
+          <span class="co-sub">@${dEsc(s.login_id)} · ${dday(s.expires_at)}</span>
+        </div>`).join("")
+      :'<div class="empty">미배정 학생이 없어요 🎉</div>')
+      +'<div class="hintline" style="margin-top:10px">배정하려면 위에서 기수를 선택한 뒤 "➕ 학생 배정"을 눌러 주세요.</div>';
+      return;
+    }
+    const rows=await rpc("get_cohort_students",{p_cohort_id:parseInt(v)})||[];
+    const list=rows.length?rows.map(s=>`
+      <div class="co-row">
+        <span class="co-name">${dEsc(s.name)}</span>
+        <span class="co-sub">@${dEsc(s.login_id)}${s.nickname&&s.nickname!==s.name?" · "+dEsc(s.nickname):""} · ${dday(s.expires_at)}</span>
+        ${isSuper?`<button class="co-btn del" onclick="unassign(${v},${s.id},'${dEsc(s.name)}')">✖ 제외</button>`:''}
+      </div>`).join("")
+    :'<div class="empty">아직 배정된 학생이 없어요</div>';
+    box.innerHTML=list+(isSuper?`<button class="pbtn" style="width:100%;margin-top:12px" onclick="openAssign(${v})">➕ 학생 배정</button>`:'');
   }catch(e){
-    box.innerHTML='<div class="empty">목록을 불러오지 못했어요 (list_students 함수가 실행됐는지 확인해 주세요)</div>';
+    box.innerHTML='<div class="empty">불러오지 못했어요 (7단계B SQL이 실행됐는지 확인해 주세요)</div>';
   }
+}
+
+async function openAssign(cohortId){
+  assignMode=true;
+  const box=document.getElementById("cohortBody");
+  box.innerHTML='<div class="empty">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_unassigned_students",{})||[];
+    box.innerHTML=`
+      <div style="font-family:'Jua';font-size:13px;margin-bottom:9px">📥 미배정 학생 (${rows.length}명) — 배정 버튼을 눌러 추가하세요</div>
+      ${rows.length?rows.map(s=>`
+      <div class="co-row" id="assign-${s.id}">
+        <span class="co-name">${dEsc(s.name)}</span>
+        <span class="co-sub">@${dEsc(s.login_id)}</span>
+        <button class="co-btn add" onclick="assign(${cohortId},${s.id},'${dEsc(s.name)}')">배정</button>
+      </div>`).join("")
+      :'<div class="empty">미배정 학생이 없어요. 새 계정을 먼저 만들어 주세요.</div>'}
+      <button class="co-btn" style="width:100%;margin-top:12px;text-align:center" onclick="onCohortChange()">‹ 기수 목록으로</button>`;
+  }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요</div>';}
+}
+
+async function assign(cohortId,studentId,name){
+  try{
+    await rpc("enroll_student",{p_cohort_id:cohortId,p_student_id:studentId});
+    toast(`${name} 학생을 배정했어요`);
+    const row=document.getElementById("assign-"+studentId);
+    if(row)row.remove();
+    await loadCohorts(true);
+  }catch(e){toast("배정 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+async function unassign(cohortId,studentId,name){
+  try{
+    await rpc("unenroll_student",{p_cohort_id:cohortId,p_student_id:studentId});
+    toast(`${name} 학생을 기수에서 제외했어요 (계정·기록은 유지)`);
+    await loadCohorts(true);
+  }catch(e){toast("제외 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+/* ================= 기수 현황판 ================= */
+async function loadDashboard(){
+  const v=document.getElementById("dashSel").value;
+  const box=document.getElementById("dashBody");
+  if(!v){box.innerHTML='<div class="empty">기수를 선택해 주세요</div>';return;}
+  box.innerHTML='<div class="empty">집계 중...</div>';
+  try{
+    const rows=await rpc("cohort_dashboard",{p_cohort_id:parseInt(v)})||[];
+    if(!rows.length){box.innerHTML='<div class="empty">이 기수에 배정된 학생이 없어요</div>';return;}
+    box.innerHTML=rows.map((r,i)=>{
+      const rank=i<3?['🥇','🥈','🥉'][i]:(i+1);
+      const last=r.last_active?String(r.last_active).slice(5,10).replace('-','/'):'—';
+      return `<div class="dash-row">
+        <span class="dash-rank">${rank}</span>
+        <span class="dash-name">${dEsc(r.name)}${r.nickname&&r.nickname!==r.name?` <span style="font-weight:400;color:#7b93a4;font-size:10.5px">(${dEsc(r.nickname)})</span>`:''}</span>
+        <span class="dash-stat">📗 ${r.units_done}유닛</span>
+        <span class="dash-stat">📖 ${r.exprs_done}</span>
+        <span class="dash-stat">🧩 ${r.quiz_count}</span>
+        <span class="dash-last">${last}</span>
+      </div>`;
+    }).join("")+'<div class="hintline" style="margin-top:10px">순위는 완료 유닛 기준 · 📖 완료 표현 수 · 🧩 퀴즈 풀이 횟수 · 마지막은 최근 학습일</div>';
+  }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요 (7단계B SQL이 실행됐는지 확인해 주세요)</div>';}
 }
 
 /* 세션 복원 */
