@@ -528,8 +528,45 @@ async function enterHome(){
       <button class="mini y" style="flex:1;text-align:center" onclick="openQuizIntro()">🧩 복습 퀴즈</button>
       <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A${QNA_ENABLED?'':' <span style="font-size:9px;color:#7b93a4">(준비중)</span>'}</button>
     </div>
-    <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>`;
+    <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>
+    <div id="weeklyTestArea"></div>`;
+  loadWeeklyTestsStudent();
   if(EXPIRED)loadGradStats();
+}
+
+/* 주간 작문시험 (공개일 지난 것만 표시) */
+async function loadWeeklyTestsStudent(){
+  const box=document.getElementById("weeklyTestArea");
+  if(!box)return;
+  try{
+    const rows=await rpc("get_my_weekly_tests",{p_student_id:ME.id})||[];
+    if(!rows.length){box.innerHTML="";return;}
+    box.innerHTML=`
+      <div class="card" style="margin-top:14px">
+        <div class="card-h"><b>✍️ 주간 작문시험</b></div>
+        <div class="card-b">
+          ${rows.map(t=>`
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1.5px solid #eef2f5">
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700">${escapeHtml(t.title)}</div>
+              <div style="font-size:10.5px;color:#7b93a4">${t.open_from} 공개</div>
+            </div>
+            <a class="mini" style="text-decoration:none" href="${t.pdf_url}" target="_blank">📄 열기</a>
+            ${t.done
+              ?'<span class="donetag">✅ 제출완료</span>'
+              :`<button class="mini y" onclick="markWeeklyDone(${t.id})">다 풀었어요</button>`}
+          </div>`).join("")}
+          <div style="font-size:11px;color:#7b93a4;margin-top:8px">PDF를 열어 풀고, 다 풀면 "다 풀었어요"를 눌러 주세요!</div>
+        </div>
+      </div>`;
+  }catch(e){box.innerHTML="";}
+}
+async function markWeeklyDone(testId){
+  try{
+    await rpc("mark_weekly_test_done",{p_test_id:testId,p_student_id:ME.id});
+    toastRoot("제출 완료! 수고했어요 ✍️");
+    loadWeeklyTestsStudent();
+  }catch(e){toastRoot("잠시 후 다시 시도해 주세요");}
 }
 
 /* 만료/졸업생: 나의 기록 요약 */
