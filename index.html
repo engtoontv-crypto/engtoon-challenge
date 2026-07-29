@@ -453,6 +453,13 @@ function playSent(){
     a.play().catch(()=>speakIt(e.sent));
   }else speakIt(e.sent);
 }
+function playQuizSent(){
+  const q=QZ[qi];const p=q.payload;
+  if(q.mp3_url){
+    const a=new Audio(q.mp3_url);
+    a.play().catch(()=>speakIt(p.sent));
+  }else speakIt(p.sent);
+}
 function escapeHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
 function renderStudy(){
@@ -598,7 +605,7 @@ function checkExpDone(){
 
 /* ================= 복습 퀴즈 ================= */
 let QZ=[];        /* 세션 문제들 */
-let qi=0, qScore=0, qWrong=[], qAnswered=false, qOrderPick=[];
+let qi=0, qScore=0, qWrong=[], qAnswered=false, qOrderPick=[], qFromUnit=null;
 
 function openQuizIntro(){
   if(EXPIRED){toastRoot("이용 기간이 끝나 퀴즈는 잠겨 있어요");return;}
@@ -611,19 +618,35 @@ function openQuizIntro(){
       <div style="font-size:12.5px;color:#5a7285;line-height:1.7;margin-bottom:14px">
         지금까지 배운 표현들이 다양한 유형으로 나와요.<br>매번 13문제가 랜덤이라 여러 번 풀어도 새로워요!
       </div>
-      <button class="bigbtn" onclick="startQuiz()">퀴즈 시작하기 ▶</button>
+      <button class="bigbtn" onclick="startQuiz()">🎲 전체 범위에서 랜덤으로 ▶</button>
+      <button class="mini" style="width:100%;text-align:center;margin-top:10px" onclick="openQuizUnitPicker()">📍 특정 유닛만 골라서 풀기</button>
     </div></div>`;
 }
 
-async function startQuiz(){
+function openQuizUnitPicker(){
+  const learned=UNITS.filter(u=>u.done>0);
+  if(!learned.length){toastRoot("아직 완료한 표현이 없어요. 먼저 학습해 주세요!");return;}
+  const rows=learned.map(u=>{
+    const full=u.done>=u.total;
+    return `<div class="ucell ${full?'done':'part'}" style="aspect-ratio:auto;padding:12px 6px" onclick="startQuiz(${u.unit_no})">UNIT ${u.unit_no}<span>${u.done}/${u.total}</span></div>`;
+  }).join("");
+  document.getElementById("quizStage").innerHTML=`
+    <div class="card"><div class="card-b">
+      <div style="font-family:'Jua';font-size:14px;margin-bottom:11px">📍 어느 유닛을 복습할까요?</div>
+      <div class="ugrid">${rows}</div>
+      <button class="mini" style="width:100%;text-align:center;margin-top:14px" onclick="openQuizIntro()">‹ 뒤로</button>
+    </div></div>`;
+}
+
+async function startQuiz(unitNo){
   document.getElementById("quizStage").innerHTML='<div class="loading">문제를 뽑는 중...</div>';
   try{
-    QZ=await rpc("get_quiz_session",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID,p_size:13})||[];
+    QZ=await rpc("get_quiz_session",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID,p_size:13,p_unit_no:unitNo||null})||[];
   }catch(e){QZ=[];}
   if(!QZ.length){
     document.getElementById("quizStage").innerHTML='<div class="loading">아직 풀 수 있는 문제가 없어요.<br>먼저 유닛 학습을 진행해 주세요!</div>';return;
   }
-  qi=0;qScore=0;qWrong=[];
+  qi=0;qScore=0;qWrong=[];qFromUnit=unitNo||null;
   renderQuiz();
 }
 
@@ -633,7 +656,7 @@ function renderQuiz(){
   if(qi>=QZ.length){finishQuiz();return;}
   qAnswered=false;qOrderPick=[];
   const q=QZ[qi];const p=q.payload;
-  document.getElementById("quizBadge").textContent=(qi+1)+"/"+QZ.length;
+  document.getElementById("quizBadge").textContent=(qFromUnit?`U${qFromUnit} `:"")+(qi+1)+"/"+QZ.length;
   let inner="";
   if(q.qtype==="match"){
     inner=`<span class="qz-kicker">뜻 매칭</span>
@@ -657,13 +680,13 @@ function renderQuiz(){
   }else if(q.qtype==="dictation"){
     inner=`<span class="qz-kicker">듣고 받아쓰기</span>
       <div class="qz-sub">문장을 듣고 그대로 써 보세요 ${p.ko?`<br>(${escapeHtml(p.ko)})`:''}</div>
-      <button class="mini" onclick="speakIt(${JSON.stringify(p.sent).replace(/"/g,'&quot;')})" style="margin-bottom:10px">🔊 다시 듣기</button>
+      <button class="mini" onclick="playQuizSent()" style="margin-bottom:10px">🔊 다시 듣기</button>
       <div class="qz-input">
         <input id="qzInput" placeholder="들은 문장을 쓰세요" autocomplete="off">
         <button class="mini y" onclick="checkDict()">확인</button>
       </div>
       <div id="qzFb"></div>`;
-    setTimeout(()=>speakIt(p.sent),350);
+    setTimeout(playQuizSent,350);
   }else if(q.qtype==="order"){
     const words=p.target.replace(/[.?!]$/,"").split(/\s+/);
     const shuffled=words.map((w,i)=>({w,i})).sort(()=>Math.random()-0.5);
@@ -777,10 +800,11 @@ function finishQuiz(){
     <div class="card"><div class="card-b">
       <div class="qz-result">
         <div class="em">${pct===100?'💯':pct>=70?'🎉':'💪'}</div>
-        <h2>${pct===100?'퍼펙트!':pct>=70?'잘했어요!':'조금만 더!'}</h2>
+        <h2>${qFromUnit?`UNIT ${qFromUnit} 복습 결과`:pct===100?'퍼펙트!':pct>=70?'잘했어요!':'조금만 더!'}</h2>
         <div class="sc">${qScore} / ${total}</div>
         <p>${pct===100?'전부 맞혔어요. 대단해요!':'틀린 표현은 아래에서 다시 확인해 보세요.'}<br>매번 다른 문제가 나오니 또 풀어봐도 좋아요.</p>
-        <button class="bigbtn" onclick="startQuiz()">🔄 한 번 더 풀기</button>
+        <button class="bigbtn" onclick="startQuiz(qFromUnit)">🔄 ${qFromUnit?'이 유닛 다시 풀기':'한 번 더 풀기'}</button>
+        <button class="mini" style="width:100%;text-align:center;margin-top:9px" onclick="openQuizUnitPicker()">📍 다른 유닛 고르기</button>
         <button class="mini" style="width:100%;text-align:center;margin-top:9px" onclick="enterHome()">홈으로</button>
       </div>
       ${wrongHtml}
