@@ -168,31 +168,6 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
         </div>
       </div>
 
-      <div class="card folded" id="card-weekly">
-        <div class="card-h" onclick="toggleCard('card-weekly')"><span class="step-no">시험</span><b>✍️ 주간 작문시험</b><span class="hint" id="weeklyHint"></span><span class="arrow">▼</span></div>
-        <div class="card-b">
-          <div class="form" style="margin-bottom:14px">
-            <div style="font-size:11px;font-weight:800;color:var(--sky-deep)">📚 어떤 챌린지 시험지인가요? (필수)</div>
-            <select id="wt-ch" style="border:1.5px solid #cfe0ea;border-radius:10px;padding:9px 11px;font-size:13px;background:#fff;font-family:'Noto Sans KR'">
-              <option value="1">100일 영어 습관 챌린지</option>
-              <option value="2">구동사 200 챌린지</option>
-            </select>
-            <input id="wt-title" placeholder="시험 이름 (비워두면 파일 이름으로 자동 설정돼요)">
-            <div class="row2"><label>공개일</label><input id="wt-open" type="date"></div>
-            <div style="font-size:11px;color:#7b93a4;margin:-4px 0 4px">공개일(보통 토요일)이 되면 학생 홈에 자동으로 나타나요</div>
-            <div style="font-size:11px;font-weight:800;margin-top:6px">📄 시험지 PDF</div>
-            <input id="wt-file" type="file" accept="application/pdf">
-            <div style="font-size:11px;color:#7b93a4;margin:-4px 0 4px">또는 링크 직접 입력:</div>
-            <input id="wt-url" placeholder="https:// ... (파일을 올리면 비워두세요)">
-            <div style="font-size:11px;font-weight:800;margin-top:6px">📝 정답지 PDF (선택 — 학생이 제출한 뒤에만 보여요)</div>
-            <input id="wt-afile" type="file" accept="application/pdf">
-            <input id="wt-aurl" placeholder="https:// ... (정답지 링크, 선택)">
-            <button class="pbtn" id="wt-btn" onclick="addWeeklyTest()">➕ 시험 등록</button>
-          </div>
-          <div id="weeklyBody"><div class="empty">불러오는 중...</div></div>
-        </div>
-      </div>
-
       <div class="card folded" id="card-mp3">
         <div class="card-h" onclick="toggleCard('card-mp3')"><span class="step-no">음원</span><b>🎙️ 발음 음원 관리</b><span class="hint">유닛별 mp3</span><span class="arrow">▼</span></div>
         <div class="card-b">
@@ -297,6 +272,8 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
     </div>
   </div>
 
+  <div style="text-align:center;padding:18px 0 24px;font-size:11px;color:#b7c5cf">개발자: Lennon</div>
+
   <div class="toast" id="toast"></div>
 </div>
 
@@ -346,9 +323,7 @@ function showMain(){
   loadOverview();
   loadTodayStatus();
   loadInactive(3);
-  loadWeeklyTests();
   loadWtestList();
-  document.getElementById("wt-open").value=nextSaturday();
 }
 
 function toggleCard(id){
