@@ -595,6 +595,12 @@ async function loadWeeklyTestsStudent(){
   const box=document.getElementById("weeklyTestArea");
   if(!box)return;
   try{
+    /* 이 챌린지가 이미 인앱 작문시험(✏️)으로 넘어갔으면, 옛날 PDF 카드는 중복이니 숨겨요 */
+    try{
+      const wtRows=await rpc("get_my_writing_tests",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+      if(wtRows.some(r=>r.question_count>0)){box.innerHTML="";return;}
+    }catch(e){/* 15단계 SQL 미실행 등으로 실패해도 기존 PDF 카드는 정상 노출 */}
+
     const rows=await rpc("get_my_weekly_tests",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
     if(!rows.length){box.innerHTML="";return;}
     box.innerHTML=`
