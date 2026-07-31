@@ -208,6 +208,18 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
         </div>
       </div>
 
+      <div class="card folded" id="card-wtest">
+        <div class="card-h" onclick="toggleCard('card-wtest')"><span class="step-no">시험</span><b>✏️ 작문시험 (인앱)</b><span class="hint">진행기반 잠금해제</span><span class="arrow">▼</span></div>
+        <div class="card-b">
+          <div style="font-size:11px;color:#7b93a4;margin-bottom:11px">문제는 챗에서 PDF를 드리면 채워드려요. 여기선 주차별 진행상황만 확인해요.</div>
+          <select id="wtest-ch" onchange="loadWtestList()" style="width:100%;border:1.5px solid #cfe0ea;border-radius:10px;padding:9px 11px;font-size:13px;background:#fff;font-family:'Noto Sans KR';margin-bottom:11px">
+            <option value="1">100일 영어 습관 챌린지</option>
+            <option value="2">구동사 200 챌린지</option>
+          </select>
+          <div id="wtestBody"><div class="empty">불러오는 중...</div></div>
+        </div>
+      </div>
+
       <div class="card folded" id="card-cohort">
         <div class="card-h" onclick="toggleCard('card-cohort')"><span class="step-no">기수</span><b>기수 관리 · 학생 배정</b><span class="hint" id="cohortHint"></span><span class="arrow">▼</span></div>
         <div class="card-b">
@@ -335,6 +347,7 @@ function showMain(){
   loadTodayStatus();
   loadInactive(3);
   loadWeeklyTests();
+  loadWtestList();
   document.getElementById("wt-open").value=nextSaturday();
 }
 
@@ -646,6 +659,58 @@ async function loadOverview(){
   }catch(e){
     box.innerHTML='<div class="empty">불러오지 못했어요 (9단계 SQL이 실행됐는지 확인해 주세요)</div>';
   }
+}
+
+/* ================= 작문시험 (인앱) 관리 ================= */
+async function loadWtestList(){
+  const ch=parseInt(document.getElementById("wtest-ch").value);
+  const box=document.getElementById("wtestBody");
+  box.innerHTML='<div class="empty">불러오는 중...</div>';
+  try{
+    const rows=await rpc("admin_list_writing_tests",{p_challenge_id:ch})||[];
+    if(!rows.length){box.innerHTML='<div class="empty">아직 시험 틀이 없어요 (15단계 SQL이 실행됐는지 확인해 주세요)</div>';return;}
+    box.innerHTML=rows.map(r=>`
+      <div style="border:1.5px solid #e3edf3;border-radius:11px;padding:10px 12px;margin-bottom:9px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <b style="font-size:13px">${r.week_no}주차 · ${dEsc(r.title)}</b>
+          <span style="font-size:10.5px;color:#7b93a4">UNIT ${r.unit_start}~${r.unit_end}</span>
+          <span style="margin-left:auto;font-size:11px;font-weight:800;color:var(--sky-deep)">문제 ${r.question_count}개 · 제출 ${r.submitted_count}/${r.eligible_count}</span>
+        </div>
+        ${r.question_count>0?`<button class="co-btn" style="margin-top:8px" onclick="toggleWtestStudents(${r.id})">👥 제출 현황 보기</button>`:'<div class="hintline" style="margin-top:6px">문제가 아직 없어요. Claude 채팅에서 이 주차 PDF를 주시면 채워드릴게요.</div>'}
+        <div id="wteststu-${r.id}" style="display:none;margin-top:9px"></div>
+      </div>`).join("");
+  }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요 (15단계 SQL이 실행됐는지 확인해 주세요)</div>';}
+}
+async function toggleWtestStudents(testId){
+  const box=document.getElementById("wteststu-"+testId);
+  if(box.style.display==="block"){box.style.display="none";return;}
+  box.style.display="block";
+  box.innerHTML="불러오는 중...";
+  try{
+    const rows=await rpc("admin_writing_test_students",{p_test_id:testId})||[];
+    box.innerHTML=rows.map(s=>`
+      <div style="display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 0;border-bottom:1px solid #eef2f5">
+        <span>${dEsc(s.name)}</span>
+        <span style="color:#7b93a4">${s.unlocked?'':'🔒 아직 미도달'}</span>
+        <span style="margin-left:auto">${s.submitted?`<button class="co-btn" style="font-size:10px;padding:3px 8px" onclick="viewWtestSubmission(${testId},${s.student_id},'${dEsc(s.name)}')">✅ 답안 보기</button>`:s.unlocked?'⬜ 미제출':'—'}</span>
+      </div>`).join("");
+  }catch(e){box.innerHTML="불러오지 못했어요";}
+}
+async function viewWtestSubmission(testId,studentId,name){
+  const veil=document.getElementById("certVeil");
+  const body=document.getElementById("certVeilBody");
+  veil.style.display="flex";
+  body.innerHTML='<div class="empty">불러오는 중...</div>';
+  try{
+    const rows=await rpc("admin_get_submission",{p_test_id:testId,p_student_id:studentId})||[];
+    body.innerHTML=`<div style="font-family:'Jua';font-size:14px;margin-bottom:10px">${dEsc(name)}님 답안</div>`+
+      rows.map(r=>`
+      <div style="border-bottom:1.5px solid #eef2f5;padding:9px 0;font-size:12.5px">
+        <b>${r.order_no}. ${dEsc(r.prompt_ko)}</b>
+        <div style="margin-top:4px">내 답: ${dEsc(r.student_answer||'(안 씀)')}</div>
+        <div style="color:var(--sky-deep);font-weight:700">모범: ${dEsc(r.model_answer)}</div>
+      </div>`).join("");
+  }catch(e){body.innerHTML='<div class="empty">불러오지 못했어요</div>';}
 }
 
 /* ================= Q&A 관리 ================= */

@@ -173,6 +173,25 @@ section[hidden]{display:none!important}
 .ch-card .ch-prog span{font-size:11px;font-weight:800;color:var(--sky-deep);background:var(--sky-soft);border-radius:999px;padding:3px 10px}
 .ch-card .ch-lock{font-size:12px;font-weight:700;color:#a8b4bc;margin-top:8px}
 
+/* ---------- 작문시험 ---------- */
+.wt-row{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:var(--pop);padding:13px 15px;margin-bottom:11px}
+.wt-row.locked{background:#f0f4f6;border-color:#dbe4ea;box-shadow:none}
+.wt-row .wt-wk{font-family:'Jua';font-size:15px;width:50px;flex-shrink:0}
+.wt-row .wt-info{flex:1}
+.wt-row .wt-title{font-size:13px;font-weight:700}
+.wt-row .wt-sub{font-size:10.5px;color:#7b93a4;margin-top:2px}
+.wq-card{background:#fff;border:2px solid var(--ink);border-radius:13px;box-shadow:var(--pop);padding:15px;margin-bottom:14px}
+.wq-num{font-family:'Jua';font-size:12px;color:var(--sky-deep);margin-bottom:5px}
+.wq-prompt{font-size:14px;font-weight:700;margin-bottom:5px;line-height:1.6}
+.wq-hint{font-size:11.5px;color:#7b93a4;margin-bottom:9px}
+.wq-input{width:100%;border:2px solid var(--ink);border-radius:10px;padding:10px 12px;font-size:14px;font-family:'Noto Sans KR';box-sizing:border-box;resize:vertical;min-height:44px}
+.wr-card{background:#fff;border:2px solid var(--ink);border-radius:13px;box-shadow:var(--pop);padding:14px 15px;margin-bottom:11px}
+.wr-prompt{font-size:13px;font-weight:700;margin-bottom:8px}
+.wr-line{display:flex;gap:8px;font-size:13px;padding:5px 0}
+.wr-line .lbl{width:44px;flex-shrink:0;font-weight:800;font-size:11px;padding-top:2px}
+.wr-mine{color:var(--ink)}
+.wr-model{color:var(--sky-deep);font-weight:700}
+
 /* ---------- 주차 현황 ---------- */
 .wk-nav{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .wk-nav button{font-family:'Jua';font-size:16px;background:#fff;border:2px solid var(--ink);border-radius:10px;width:38px;height:38px;cursor:pointer;box-shadow:2px 2px 0 var(--ink)}
@@ -362,6 +381,42 @@ section[hidden]{display:none!important}
     <div class="stage" id="certStage"><div class="loading">불러오는 중...</div></div>
   </section>
 
+  <!-- 작문시험 목록 -->
+  <section id="scr-wtlist" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="enterHome()">‹ 홈</button>
+        <div class="brand">✏️ 작문시험</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage" id="wtListStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
+  <!-- 작문시험 응시 -->
+  <section id="scr-wttake" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="leaveWtTake()">‹ 나가기</button>
+        <div class="brand" id="wtTakeTitle">작문시험</div>
+        <span id="wtTakeProg" style="font-size:11px;font-weight:800;color:var(--sky-deep)"></span>
+      </div>
+    </div>
+    <div class="stage" id="wtTakeStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
+  <!-- 작문시험 결과 -->
+  <section id="scr-wtresult" hidden>
+    <div class="topbar">
+      <div class="row">
+        <button class="backbtn" onclick="openWritingTests()">‹ 목록</button>
+        <div class="brand">✅ 채점 결과</div>
+        <span style="width:52px"></span>
+      </div>
+    </div>
+    <div class="stage" id="wtResultStage"><div class="loading">불러오는 중...</div></div>
+  </section>
+
   <div class="veil" id="qnaVeil">
     <div class="vmodal" style="text-align:left">
       <div style="font-family:'Jua';font-size:16px;margin-bottom:4px">💬 잉툰쌤에게 질문하기</div>
@@ -416,7 +471,7 @@ function toastRoot(msg){
   t.textContent=msg;t.classList.add("show");
   clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove("show"),2200);
 }
-const SCR={login:"scr-login",challenges:"scr-challenges",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks",cert:"scr-cert"};
+const SCR={login:"scr-login",challenges:"scr-challenges",home:"scr-home",units:"scr-units",study:"scr-study",medals:"scr-medals",quiz:"scr-quiz",qna:"scr-qna",settings:"scr-settings",weeks:"scr-weeks",cert:"scr-cert",wtlist:"scr-wtlist",wttake:"scr-wttake",wtresult:"scr-wtresult"};
 function show(name){
   for(const k in SCR) document.getElementById(SCR[k]).hidden=(k!==name);
   window.scrollTo(0,0);
@@ -529,6 +584,7 @@ async function enterHome(){
       <button class="mini" style="flex:1;text-align:center" onclick="openQna()">💬 Q&amp;A${QNA_ENABLED?'':' <span style="font-size:9px;color:#7b93a4">(준비중)</span>'}</button>
     </div>
     <button class="mini" style="width:100%;text-align:center" onclick="openWeeks()">📆 주차 현황</button>
+    <button class="mini" style="width:100%;text-align:center;margin-top:9px" onclick="openWritingTests()">✏️ 작문시험</button>
     <div id="weeklyTestArea"></div>`;
   loadWeeklyTestsStudent();
   if(EXPIRED)loadGradStats();
@@ -1269,6 +1325,118 @@ async function pickChallenge(chId){
   CHALLENGE_ID=chId;
   localStorage.setItem(SKEY+"_ch",String(chId));
   await enterHome();
+}
+
+/* ================= 작문시험 (인앱) ================= */
+let WT_CUR=null;      /* 현재 응시 중인 시험 정보 {id,title} */
+let WT_Q=[];           /* 현재 시험 문제 목록 */
+let WT_ANS={};          /* {order_no: text} */
+
+async function openWritingTests(){
+  show("wtlist");
+  const stage=document.getElementById("wtListStage");
+  stage.innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_my_writing_tests",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
+    const withQ=rows.filter(r=>r.question_count>0);
+    if(!withQ.length){
+      stage.innerHTML='<div class="loading">아직 등록된 작문시험이 없어요</div>';return;
+    }
+    stage.innerHTML=withQ.map(r=>{
+      if(!r.unlocked){
+        return `<div class="wt-row locked">
+          <div class="wt-wk">${r.week_no}주차</div>
+          <div class="wt-info">
+            <div class="wt-title" style="color:#a8b4bc">🔒 ${escapeHtml(r.title)}</div>
+            <div class="wt-sub">UNIT ${r.unit_start}~${r.unit_end} 완료하면 열려요</div>
+          </div>
+        </div>`;
+      }
+      if(r.submitted){
+        return `<div class="wt-row" onclick="openWtResult(${r.id})">
+          <div class="wt-wk">${r.week_no}주차</div>
+          <div class="wt-info">
+            <div class="wt-title">${escapeHtml(r.title)}</div>
+            <div class="wt-sub">UNIT ${r.unit_start}~${r.unit_end} · 문제 ${r.question_count}개</div>
+          </div>
+          <span class="donetag">✅ 제출완료</span>
+        </div>`;
+      }
+      return `<div class="wt-row" onclick="openWtTake(${r.id},'${escapeHtml(r.title)}')">
+        <div class="wt-wk">${r.week_no}주차</div>
+        <div class="wt-info">
+          <div class="wt-title">${escapeHtml(r.title)}</div>
+          <div class="wt-sub">UNIT ${r.unit_start}~${r.unit_end} · 문제 ${r.question_count}개</div>
+        </div>
+        <span class="mini y">시험 보기</span>
+      </div>`;
+    }).join("");
+  }catch(e){
+    stage.innerHTML='<div class="loading">불러오지 못했어요 (15단계 SQL이 실행됐는지 확인해 주세요)</div>';
+  }
+}
+
+async function openWtTake(testId,title){
+  const rows=await rpc("get_writing_test_questions",{p_test_id:testId})||[];
+  if(!rows.length){toastRoot("아직 문제가 등록되지 않았어요");return;}
+  WT_CUR={id:testId,title};
+  WT_Q=rows;
+  WT_ANS={};
+  show("wttake");
+  document.getElementById("wtTakeTitle").textContent=title;
+  renderWtTake();
+}
+
+function renderWtTake(){
+  const answered=Object.keys(WT_ANS).filter(k=>WT_ANS[k]&&WT_ANS[k].trim()).length;
+  document.getElementById("wtTakeProg").textContent=`${answered}/${WT_Q.length}`;
+  const cards=WT_Q.map(q=>`
+    <div class="wq-card">
+      <div class="wq-num">${q.order_no}번</div>
+      <div class="wq-prompt">${escapeHtml(q.prompt_ko)}</div>
+      ${q.hint?`<div class="wq-hint">💡 ${escapeHtml(q.hint)}</div>`:''}
+      <textarea class="wq-input" id="wq-${q.order_no}" placeholder="영어로 써보세요" oninput="WT_ANS[${q.order_no}]=this.value;document.getElementById('wtTakeProg').textContent=Object.values(WT_ANS).filter(v=>v&&v.trim()).length+'/'+${WT_Q.length}">${escapeHtml(WT_ANS[q.order_no]||"")}</textarea>
+    </div>`).join("");
+  document.getElementById("wtTakeStage").innerHTML=cards+`
+    <button class="bigbtn" onclick="submitWt()">✅ 제출하기</button>
+    <div style="font-size:11px;color:#7b93a4;text-align:center;margin-top:9px">제출하면 수정할 수 없어요. 다 쓴 뒤에 눌러주세요!</div>`;
+}
+
+async function submitWt(){
+  const answered=Object.keys(WT_ANS).filter(k=>WT_ANS[k]&&WT_ANS[k].trim()).length;
+  if(answered<WT_Q.length){
+    if(!confirm(`${WT_Q.length}문제 중 ${answered}개만 썼어요. 그래도 제출할까요?`))return;
+  }else{
+    if(!confirm("제출하면 수정할 수 없어요. 제출할까요?"))return;
+  }
+  const payload=WT_Q.map(q=>({order_no:q.order_no,text:WT_ANS[q.order_no]||""}));
+  try{
+    await rpc("submit_writing_test",{p_student_id:ME.id,p_test_id:WT_CUR.id,p_answers:payload});
+    toastRoot("제출 완료! 수고했어요 ✏️");
+    openWtResult(WT_CUR.id);
+  }catch(e){toastRoot("제출 실패: 잠시 후 다시 시도해 주세요");}
+}
+
+function leaveWtTake(){
+  if(!confirm("시험을 그만 볼까요? 지금까지 쓴 내용은 저장되지 않아요."))return;
+  openWritingTests();
+}
+
+async function openWtResult(testId){
+  show("wtresult");
+  const stage=document.getElementById("wtResultStage");
+  stage.innerHTML='<div class="loading">불러오는 중...</div>';
+  try{
+    const rows=await rpc("get_writing_test_result",{p_student_id:ME.id,p_test_id:testId})||[];
+    if(!rows.length){stage.innerHTML='<div class="loading">결과를 찾을 수 없어요</div>';return;}
+    stage.innerHTML=rows.map(r=>`
+      <div class="wr-card">
+        <div class="wr-prompt">${r.order_no}. ${escapeHtml(r.prompt_ko)}</div>
+        <div class="wr-line"><span class="lbl">내 답</span><span class="wr-mine">${escapeHtml(r.my_answer||"(안 씀)")}</span></div>
+        <div class="wr-line"><span class="lbl">모범</span><span class="wr-model">${escapeHtml(r.model_answer)}</span></div>
+      </div>`).join("")
+      +'<button class="mini" style="width:100%;text-align:center;margin-top:6px" onclick="openWritingTests()">‹ 목록으로</button>';
+  }catch(e){stage.innerHTML='<div class="loading">불러오지 못했어요</div>';}
 }
 
 /* ================= 설정 ================= */
