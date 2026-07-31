@@ -539,19 +539,20 @@ async function loadWeeklyTestsStudent(){
   const box=document.getElementById("weeklyTestArea");
   if(!box)return;
   try{
-    const rows=await rpc("get_my_weekly_tests",{p_student_id:ME.id})||[];
+    const rows=await rpc("get_my_weekly_tests",{p_student_id:ME.id,p_challenge_id:CHALLENGE_ID})||[];
     if(!rows.length){box.innerHTML="";return;}
     box.innerHTML=`
       <div class="card" style="margin-top:14px">
         <div class="card-h"><b>✍️ 주간 작문시험</b></div>
         <div class="card-b">
           ${rows.map(t=>`
-          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1.5px solid #eef2f5">
-            <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1.5px solid #eef2f5;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px">
               <div style="font-size:13px;font-weight:700">${escapeHtml(t.title)}</div>
               <div style="font-size:10.5px;color:#7b93a4">${t.open_from} 공개</div>
             </div>
-            <a class="mini" style="text-decoration:none" href="${t.pdf_url}" target="_blank">📄 열기</a>
+            <a class="mini" style="text-decoration:none" href="${t.pdf_url}" target="_blank">📄 시험지</a>
+            ${t.answer_url?`<a class="mini" style="text-decoration:none" href="${t.answer_url}" target="_blank">📝 정답지</a>`:''}
             ${t.done
               ?'<span class="donetag">✅ 제출완료</span>'
               :`<button class="mini y" onclick="markWeeklyDone(${t.id})">다 풀었어요</button>`}

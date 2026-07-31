@@ -172,12 +172,21 @@ body{font-family:'Noto Sans KR',sans-serif;color:var(--ink);background:var(--sky
         <div class="card-h" onclick="toggleCard('card-weekly')"><span class="step-no">시험</span><b>✍️ 주간 작문시험</b><span class="hint" id="weeklyHint"></span><span class="arrow">▼</span></div>
         <div class="card-b">
           <div class="form" style="margin-bottom:14px">
-            <input id="wt-title" placeholder="시험 이름 (예: 8월 1주차 작문시험)">
+            <div style="font-size:11px;font-weight:800;color:var(--sky-deep)">📚 어떤 챌린지 시험지인가요? (필수)</div>
+            <select id="wt-ch" style="border:1.5px solid #cfe0ea;border-radius:10px;padding:9px 11px;font-size:13px;background:#fff;font-family:'Noto Sans KR'">
+              <option value="1">100일 영어 습관 챌린지</option>
+              <option value="2">구동사 200 챌린지</option>
+            </select>
+            <input id="wt-title" placeholder="시험 이름 (비워두면 파일 이름으로 자동 설정돼요)">
             <div class="row2"><label>공개일</label><input id="wt-open" type="date"></div>
             <div style="font-size:11px;color:#7b93a4;margin:-4px 0 4px">공개일(보통 토요일)이 되면 학생 홈에 자동으로 나타나요</div>
+            <div style="font-size:11px;font-weight:800;margin-top:6px">📄 시험지 PDF</div>
             <input id="wt-file" type="file" accept="application/pdf">
-            <div style="font-size:11px;color:#7b93a4;margin:-4px 0 4px">또는 PDF 링크 직접 입력:</div>
+            <div style="font-size:11px;color:#7b93a4;margin:-4px 0 4px">또는 링크 직접 입력:</div>
             <input id="wt-url" placeholder="https:// ... (파일을 올리면 비워두세요)">
+            <div style="font-size:11px;font-weight:800;margin-top:6px">📝 정답지 PDF (선택 — 학생이 제출한 뒤에만 보여요)</div>
+            <input id="wt-afile" type="file" accept="application/pdf">
+            <input id="wt-aurl" placeholder="https:// ... (정답지 링크, 선택)">
             <button class="pbtn" id="wt-btn" onclick="addWeeklyTest()">➕ 시험 등록</button>
           </div>
           <div id="weeklyBody"><div class="empty">불러오는 중...</div></div>
@@ -484,13 +493,15 @@ async function loadWeeklyTests(){
       const opened=t.open_from<=new Date().toISOString().slice(0,10);
       return `
       <div style="border:1.5px solid #e3edf3;border-radius:11px;padding:10px 12px;margin-bottom:9px">
-        <div style="display:flex;align-items:center;gap:7px">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+          <span class="ov-dday ok" style="background:var(--sky-deep);color:#fff">${dEsc(t.challenge_name||'')}</span>
           <b style="font-size:13px">${dEsc(t.title)}</b>
           <span class="ov-dday ${opened?'ok':'soon'}">${opened?'공개중':'공개 '+t.open_from}</span>
           <span style="margin-left:auto;font-size:11px;font-weight:800;color:var(--sky-deep)">제출 ${t.done_count}/${t.total_students}</span>
         </div>
-        <div style="display:flex;gap:7px;margin-top:8px">
-          <a class="co-btn" style="text-decoration:none" href="${t.pdf_url}" target="_blank">📄 PDF 열기</a>
+        <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+          <a class="co-btn" style="text-decoration:none" href="${t.pdf_url}" target="_blank">📄 시험지</a>
+          ${t.answer_url?`<a class="co-btn" style="text-decoration:none" href="${t.answer_url}" target="_blank">📝 정답지</a>`:''}
           <button class="co-btn" onclick="showWeeklyStatus(${t.id})">👥 제출 현황</button>
           <button class="co-btn del" onclick="delWeeklyTest(${t.id},'${dEsc(t.title)}')">🗑 삭제</button>
         </div>
@@ -500,24 +511,44 @@ async function loadWeeklyTests(){
     :'<div class="empty">아직 등록된 시험이 없어요. 위에서 첫 시험을 등록해 보세요!</div>';
   }catch(e){box.innerHTML='<div class="empty">불러오지 못했어요 (14단계 SQL이 실행됐는지 확인해 주세요)</div>';}
 }
+function titleFromFilename(name){
+  return name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," ").trim();
+}
+function titleFromUrl(u){
+  try{
+    const last=decodeURIComponent(u.split("/").pop().split("?")[0]);
+    return titleFromFilename(last);
+  }catch(e){return "";}
+}
 async function addWeeklyTest(){
-  const title=document.getElementById("wt-title").value.trim();
+  let title=document.getElementById("wt-title").value.trim();
   const open=document.getElementById("wt-open").value;
   const file=document.getElementById("wt-file").files[0];
   let url=document.getElementById("wt-url").value.trim();
-  if(!title||!open){toast("시험 이름과 공개일을 입력해 주세요");return;}
-  if(!file&&!url){toast("PDF 파일을 올리거나 링크를 입력해 주세요");return;}
+  const afile=document.getElementById("wt-afile").files[0];
+  let aurl=document.getElementById("wt-aurl").value.trim();
+  if(!open){toast("공개일을 입력해 주세요");return;}
+  if(!file&&!url){toast("시험지 PDF 파일을 올리거나 링크를 입력해 주세요");return;}
+  if(!title){
+    title=file?titleFromFilename(file.name):titleFromUrl(url);
+    if(!title){toast("시험 이름을 입력하거나 파일을 올려 주세요");return;}
+  }
   const btn=document.getElementById("wt-btn");
   btn.disabled=true;btn.textContent="등록 중...";
   try{
     if(file){
       url=await uploadToStorage(file,`weekly/${Date.now()}_${safeName(file.name)}`);
     }
-    await rpc("admin_add_weekly_test",{p_title:title,p_pdf_url:url,p_open_from:open});
-    toast("시험을 등록했어요. 공개일이 되면 학생 홈에 나타나요");
+    if(afile){
+      aurl=await uploadToStorage(afile,`weekly/${Date.now()}_answer_${safeName(afile.name)}`);
+    }
+    await rpc("admin_add_weekly_test",{p_challenge_id:parseInt(document.getElementById("wt-ch").value),p_title:title,p_pdf_url:url,p_open_from:open,p_answer_url:aurl||null});
+    toast("시험을 등록했어요. 공개일이 되면 해당 챌린지 학생 홈에 나타나요");
     document.getElementById("wt-title").value="";
     document.getElementById("wt-file").value="";
     document.getElementById("wt-url").value="";
+    document.getElementById("wt-afile").value="";
+    document.getElementById("wt-aurl").value="";
     document.getElementById("wt-open").value=nextSaturday();
     await loadWeeklyTests();
   }catch(e){toast("등록 실패: 14단계 SQL(저장소 설정 포함)이 실행됐는지 확인해 주세요");}
